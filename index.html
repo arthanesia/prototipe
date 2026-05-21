@@ -40,6 +40,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- html2pdf.js & marked.js for Premium Document Export and Markdown rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <style>
         .no-scrollbar::-webkit-scrollbar {
@@ -938,6 +941,78 @@
     </div>
 
     <!-- ==================================================== -->
+    <!-- HIDDEN PREMIUM REPORT TEMPLATE FOR ACTUAL PDF GENERATION -->
+    <!-- ==================================================== -->
+    <div id="pdf-report-container" class="hidden">
+        <div id="pdf-report-template" class="p-10 bg-white text-slate-800 font-sans" style="width: 790px; min-height: 1000px; box-sizing: border-box; position: relative;">
+            <!-- Report Header -->
+            <div class="flex justify-between items-center border-b-2 border-indigo-600 pb-5 mb-8">
+                <div>
+                    <h1 class="text-2xl font-extrabold text-indigo-600 tracking-tight">ARTHANESIA</h1>
+                    <p class="text-xs text-slate-400 font-semibold tracking-wider uppercase">Laporan Analisis Finansial Bisnis</p>
+                </div>
+                <div class="text-right">
+                    <h2 id="pdf-biz-name" class="text-lg font-bold text-slate-700">KOPI NUSANTARA</h2>
+                    <p id="pdf-owner-name" class="text-xs text-slate-500 font-medium">Owner: Aero Pratama</p>
+                    <p id="pdf-report-date" class="text-[10px] text-slate-400 font-bold mt-1">Dicetak: 21 Mei 2026</p>
+                </div>
+            </div>
+
+            <!-- Dashboard Highlights Grid -->
+            <div class="grid grid-cols-4 gap-4 mb-8">
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 text-center">
+                    <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block">Total Saldo</span>
+                    <span id="pdf-stat-balance" class="text-sm font-bold text-slate-800">Rp 0</span>
+                </div>
+                <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-center">
+                    <span class="text-[9px] font-extrabold text-emerald-600 uppercase tracking-wider block">Total Pemasukan</span>
+                    <span id="pdf-stat-income" class="text-sm font-bold text-emerald-700">Rp 0</span>
+                </div>
+                <div class="p-4 bg-rose-50 rounded-xl border border-rose-100 text-center">
+                    <span class="text-[9px] font-extrabold text-rose-600 uppercase tracking-wider block">Total Pengeluaran</span>
+                    <span id="pdf-stat-expense" class="text-sm font-bold text-rose-700">Rp 0</span>
+                </div>
+                <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100 text-center">
+                    <span class="text-[9px] font-extrabold text-indigo-600 uppercase tracking-wider block">ArthaScore</span>
+                    <span id="pdf-stat-score" class="text-sm font-bold text-indigo-700">80/100</span>
+                </div>
+            </div>
+
+            <!-- Smart Business Insight (Evaluations) -->
+            <div class="mb-8 p-5 bg-indigo-50/50 rounded-xl border border-indigo-100/50">
+                <h3 class="text-xs font-bold text-indigo-900 tracking-wider uppercase mb-3"><i class="fa-solid fa-lightbulb mr-2"></i> Smart Business Insight</h3>
+                <div id="pdf-insight-list" class="space-y-2.5 text-xs text-indigo-950 font-normal leading-relaxed">
+                    <!-- Dynamic insights inserted here -->
+                </div>
+            </div>
+
+            <!-- Transactions Ledger Table -->
+            <div class="mb-8">
+                <h3 class="text-xs font-bold text-slate-400 tracking-wider uppercase mb-3">Detail Mutasi Buku Transaksi</h3>
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-[10px] text-slate-500 uppercase tracking-wider">
+                            <th class="p-3 rounded-l-lg">Tanggal</th>
+                            <th class="p-3">Kategori</th>
+                            <th class="p-3">Deskripsi</th>
+                            <th class="p-3 text-right rounded-r-lg">Nominal / Tipe</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pdf-table-body" class="text-xs divide-y divide-slate-100">
+                        <!-- Dynamic transaction rows inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer / Disclaimer -->
+            <div class="absolute bottom-10 left-10 right-10 flex justify-between items-center text-[10px] text-slate-400 pt-5 border-t border-slate-100">
+                <span>© 2026 Arthanesia. Seluruh data keuangan terenkripsi secara lokal.</span>
+                <span class="font-bold">Laporan Finansial Otomatis</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================================================== -->
     <!-- JAVASCRIPT SYSTEM ENGINE, DATABASE, & STATE CODE -->
     <!-- ==================================================== -->
     <script>
@@ -1654,27 +1729,145 @@
             showToast("Transaksi berhasil dihapus dari pembukuan.", "warning");
         }
 
+        // ==================================================== -->
+        // UPGRADED EXPORT SYSTEM (REAL CSV & PREMIUM PDF REPORT)
+        // ==================================================== -->
         function exportReport(format) {
             const transactions = state.transactions || [];
             if (transactions.length === 0) {
-                showToast("Tidak ada transaksi untuk diekspor.", "warning");
+                showToast("Tidak ada transaksi untuk diekspor saat ini.", "warning");
                 return;
             }
+
+            let totalIncome = 0;
+            let totalExpense = 0;
+            transactions.forEach(t => {
+                if (t.type === 'income') totalIncome += Number(t.amount);
+                else totalExpense += Number(t.amount);
+            });
+            const netProfit = totalIncome - totalExpense;
+            const arthaScore = calculateArthaScore();
+            const dateStr = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
             
+            // Show custom loading progress overlay
+            showToast("Memproses ekspor dokumen...", "info");
+
             if (format === 'excel') {
-                let csv = "Tanggal,Deskripsi,Kategori,Tipe,Nominal\n";
+                // 1. GENERATE HIGHLY PROFESSIONAL CSV REPORT WITH SUMMARIES
+                let csv = "\uFEFF"; // BOM to support Excel UTF-8
+                csv += "=== ARTHANESIA BUSINESS FINANCIAL REPORT ===\r\n";
+                csv += `Nama Usaha,${state.businessName.toUpperCase()}\r\n`;
+                csv += `Nama Owner,${state.username}\r\n`;
+                csv += `Tanggal Ekspor,${dateStr}\r\n`;
+                csv += `ArthaScore,${arthaScore}/100 (${getScoreStatus(arthaScore).label})\r\n\r\n`;
+
+                csv += "=== RINGKASAN FINANSIAL ===\r\n";
+                csvContentVal = (val) => formatVal(val).replace(/Rp\s?/g, '').replace(/\./g, '');
+                csv += `Total Pendapatan (Income),Rp ${csvContentVal(totalIncome)}\r\n`;
+                csv += `Total Pengeluaran (Expense),Rp ${csvContentVal(totalExpense)}\r\n`;
+                csv += `Laba/Rugi Bersih (Net Profit),Rp ${csvContentVal(netProfit)}\r\n\r\n`;
+
+                csv += "=== BUKU BESAR DETAIL TRANSAKSI ===\r\n";
+                csv += "Tanggal,Kategori,Deskripsi,Jenis Transaksi,Nominal (IDR)\r\n";
+
                 transactions.forEach(t => {
-                    csv += `${t.date},${t.description.replace(/,/g, '')},${t.category},${t.type},${t.amount}\n`;
+                    const cleanDesc = t.description.replace(/"/g, '""');
+                    const cleanCat = t.category;
+                    const cleanType = t.type === 'income' ? 'Pemasukan (+)' : 'Pengeluaran (-)';
+                    csv += `${t.date},${cleanCat},"${cleanDesc}",${cleanType},${t.amount}\r\n`;
                 });
+
+                const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
                 const link = document.createElement("a");
-                link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv));
-                link.setAttribute("download", `Laporan_Arthanesia_${state.businessName.replace(/\s+/g, '_')}.csv`);
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `Arthanesia_Financial_Report_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                showToast("Mengekspor berkas CSV pembukuan berhasil.", "success");
-            } else {
-                showToast("Berhasil mencetak dokumen laporan mutasi (PDF disimulasikan).", "success");
+
+                setTimeout(() => {
+                    showToast("Ekspor berkas CSV berhasil terunduh!", "success");
+                }, 800);
+
+            } else if (format === 'pdf') {
+                // 2. GENERATE AND PRINT PREMIUM CORPORATE PDF REPORT VIA HTML2PDF
+                const container = document.getElementById('pdf-report-container');
+                const template = document.getElementById('pdf-report-template');
+
+                // Bind state values into the print template dynamically
+                document.getElementById('pdf-biz-name').innerText = state.businessName.toUpperCase();
+                document.getElementById('pdf-owner-name').innerText = `Owner: ${state.username}`;
+                document.getElementById('pdf-report-date').innerText = `Dicetak: ${dateStr}`;
+
+                document.getElementById('pdf-stat-balance').innerText = formatVal(totalIncome - totalExpense);
+                document.getElementById('pdf-stat-income').innerText = formatVal(totalIncome);
+                document.getElementById('pdf-stat-expense').innerText = formatVal(totalExpense);
+                document.getElementById('pdf-stat-score').innerText = `${arthaScore}/100`;
+
+                // Populate dynamic insights to template
+                const insightList = document.getElementById('pdf-insight-list');
+                insightList.innerHTML = '';
+                
+                // Get standard evaluation messages matching the active balance
+                let insightElements = [];
+                if (totalIncome > 0) {
+                    const margin = (((totalIncome - totalExpense) / totalIncome) * 100).toFixed(0);
+                    if (margin > 30) {
+                        insightElements.push(`• <b>Laba Usaha Sehat:</b> Margin rasio profitabilitas menyentuh angka ${margin}%. Usaha berkembang pesat dengan pembiayaan modal mandiri.`);
+                    } else if (margin <= 10 && margin >= 0) {
+                        insightElements.push(`• <b>Margin Laba Menipis:</b> Efisiensi margin tersisa ${margin}%. Sangat disarankan meninjau pengeluaran operasional non-esensial.`);
+                    } else {
+                        insightElements.push(`• <b>Defisit Saldo:</b> Pengeluaran melampaui pemasukan bersih. Lakukan tinjauan alur keluar kas kasir segera.`);
+                    }
+                } else {
+                    insightElements.push(`• <b>Catatan Awal:</b> Mulailah memasukkan data transaksi usaha harian Anda untuk melacak laporan performa keuangan otomatis.`);
+                }
+
+                insightElements.forEach(ins => {
+                    const p = document.createElement('p');
+                    p.innerHTML = ins;
+                    insightList.appendChild(p);
+                });
+
+                // Populate ledger rows
+                const tableBody = document.getElementById('pdf-table-body');
+                tableBody.innerHTML = '';
+
+                transactions.forEach(t => {
+                    const isInc = t.type === 'income';
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50/50 transition";
+                    tr.innerHTML = `
+                        <td class="p-3 font-semibold text-slate-500">${t.date}</td>
+                        <td class="p-3 font-bold text-slate-700">${t.category}</td>
+                        <td class="p-3 text-slate-600">${t.description}</td>
+                        <td class="p-3 text-right font-black ${isInc ? 'text-emerald-600' : 'text-slate-800'}">
+                            ${isInc ? '+' : '-'} ${formatVal(t.amount)}
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+                // Trigger render pipeline from hidden container element
+                container.classList.remove('hidden');
+
+                const opt = {
+                    margin:       [0.4, 0.4, 0.4, 0.4],
+                    filename:     `Arthanesia_Business_Report_${new Date().toISOString().split('T')[0]}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
+
+                html2pdf().from(template).set(opt).save().then(() => {
+                    container.classList.add('hidden');
+                    showToast("Dokumen PDF berhasil diunduh!", "success");
+                }).catch(err => {
+                    container.classList.add('hidden');
+                    showToast("Gagal memproses pembuatan laporan PDF.", "error");
+                });
             }
         }
 
@@ -1793,506 +1986,15 @@
         }
 
         // ==================================================== -->
-        // MAIN SCREEN 4 RENDERING: GOALS LIST
+        // ARTHA ASSISTANT CHATBOT PUSH SERVICES (REAL GEMINI INTEGRATION)
         // ==================================================== -->
-        function renderGoalsList() {
-            const list = document.getElementById('goals-list');
-            list.innerHTML = '';
+        // Placeholder for Gemini API Key (Can be overridden inside the in-app configuration panel)
+        const GEMINI_API_KEY = "YOUR_API_KEY";
 
-            const goals = state.goals || [];
-            if (goals.length === 0) {
-                list.innerHTML = `
-                    <div class="p-6 text-center text-slate-400 dark:text-slate-600 bg-white dark:bg-fintech-darkCard border border-slate-100 dark:border-slate-800 rounded-xl text-[10px] font-light">
-                        Belum ada target keuangan dibuat harian.
-                    </div>
-                `;
-                return;
-            }
-
-            goals.forEach(g => {
-                const percent = Math.min(((g.current / g.target) * 100), 100).toFixed(0);
-                const block = document.createElement('div');
-                block.className = "p-3 bg-white dark:bg-fintech-darkCard border border-slate-100 dark:border-slate-800 rounded-xl space-y-1.5 select-none";
-                block.innerHTML = `
-                    <div class="flex justify-between items-start text-[10px]">
-                        <div class="min-w-0">
-                            <h4 class="font-extrabold text-slate-800 dark:text-white truncate">${g.name}</h4>
-                            <span class="text-[8px] text-slate-400">Pencapaian: ${percent}%</span>
-                        </div>
-                        <div class="text-right flex-shrink-0">
-                            <span class="font-extrabold text-slate-700 dark:text-slate-200">${formatVal(g.current)}</span>
-                            <span class="text-slate-400 text-[9px]"> / ${formatVal(g.target)}</span>
-                        </div>
-                    </div>
-                    <div class="w-full h-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200/20 rounded-full overflow-hidden">
-                        <div class="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full transition-all duration-300" style="width: ${percent}%"></div>
-                    </div>
-                    <div class="flex justify-between items-center pt-0.5 text-[9px]">
-                        <button onclick="injectFundsGoal(${g.id})" class="text-indigo-500 hover:underline font-bold">Tambah Tabungan</button>
-                        <button onclick="deleteGoal(${g.id})" class="text-rose-500 hover:underline font-bold">Hapus</button>
-                    </div>
-                `;
-                list.appendChild(block);
-            });
-        }
-
-        function injectFundsGoal(id) {
-            const val = prompt("Masukkan jumlah alokasi tambahan (nominal):", "500000");
-            if (val && !isNaN(val)) {
-                const goals = state.goals || [];
-                const idx = goals.findIndex(g => g.id === id);
-                if (idx !== -1) {
-                    goals[idx].current += Number(val);
-                    saveUserChangesToDatabase();
-                    renderGoalsList();
-
-                    addNotificationAlert(
-                        "success",
-                        "Tabungan Ditambahkan",
-                        `Berhasil mengalokasikan ${formatVal(val)} ke target ${goals[idx].name}.`
-                    );
-                    showToast("Alokasi dana target berhasil ditambahkan!", "success");
-                }
-            }
-        }
-
-        function deleteGoal(id) {
-            state.goals = (state.goals || []).filter(g => g.id !== id);
-            saveUserChangesToDatabase();
-            renderGoalsList();
-            showToast("Target tabungan berhasil dihapus.", "warning");
-        }
-
-        // ==================================================== -->
-        // MAIN SCREEN 5 RENDERING: PROFILE & SETTINGS
-        // ==================================================== -->
-        function loadProfileSettingsData() {
-            let totalIncome = 0;
-            let totalExpense = 0;
-            const transactions = state.transactions || [];
-            transactions.forEach(t => {
-                if (t.type === 'income') totalIncome += Number(t.amount);
-                else totalExpense += Number(t.amount);
-            });
-            const totalBalance = totalIncome - totalExpense;
-
-            const ownerName = state.username || "Aero Pratama";
-            const bizName = state.businessName || "Aero Studio";
-            const bizEmail = state.email || "aero@studionusa.com";
-            const bizLevel = getBusinessLevelBadge(totalBalance);
-
-            // Populate settings elements
-            document.getElementById('profile-name-tag').innerText = ownerName;
-            document.getElementById('profile-email-tag').innerText = bizEmail;
-            document.getElementById('profile-level-text').innerText = bizLevel;
-
-            document.getElementById('profile-input-currency').value = state.currency || "IDR";
-            document.getElementById('profile-secure-toggle').checked = state.secureBiometric || false;
-
-            renderProfileBadges(totalBalance);
-        }
-
-        function renderProfileBadges(totalBalance) {
-            const container = document.getElementById('profile-badges-container');
-            container.innerHTML = '';
-
-            const transactions = state.transactions || [];
-            const goals = state.goals || [];
-
-            const badgesConfig = [
-                { id: "saver", name: "Smart Saver", icon: "fa-piggy-bank", desc: "Goal progress > 50%", active: goals.some(g => (g.current/g.target) >= 0.5) },
-                { id: "tracker", name: "Consistent Tracker", icon: "fa-calendar-check", desc: "Transactions > 5", active: transactions.length >= 5 },
-                { id: "booster", name: "Profit Booster", icon: "fa-rocket", desc: "ArthaScore > 80", active: calculateArthaScore() >= 80 },
-                { id: "master", name: "Budget Master", icon: "fa-receipt", desc: "Expense < 5 jt", active: totalBalance > 10000000 },
-                { id: "starter", name: "Growth Starter", icon: "fa-seedling", desc: "Setup Complete", active: true }
-            ];
-
-            badgesConfig.forEach(b => {
-                const badgeBox = document.createElement('div');
-                badgeBox.className = `flex flex-col items-center justify-center p-1.5 rounded-lg border text-center transition ${b.active ? 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-950/25 dark:border-indigo-900/40 dark:text-indigo-400' : 'bg-slate-50 border-slate-100 text-slate-300 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-700'}`;
-                badgeBox.title = `${b.name}: ${b.desc}`;
-                badgeBox.innerHTML = `
-                    <span class="text-xs mb-0.5"><i class="fa-solid ${b.icon}"></i></span>
-                    <span class="text-[7px] font-extrabold leading-none truncate w-full">${b.name}</span>
-                `;
-                container.appendChild(badgeBox);
-            });
-        }
-
-        function changeCurrencyState() {
-            const cur = document.getElementById('profile-input-currency').value;
-            state.currency = cur;
-            saveUserChangesToDatabase();
-            showToast(`Mata uang utama diubah ke ${cur}`, "success");
-            
-            // Adjust indicators
-            document.getElementById('modal-currency-indicator').innerText = cur === 'USD' ? '$' : 'Rp';
-            document.getElementById('modal-goal-currency').innerText = cur === 'USD' ? '$' : 'Rp';
-            document.getElementById('modal-goal-current-currency').innerText = cur === 'USD' ? '$' : 'Rp';
-            
-            if (currentTab === 'profile') loadProfileSettingsData();
-        }
-
-        function toggleBiometricSecure() {
-            const secureState = document.getElementById('profile-secure-toggle').checked;
-            state.secureBiometric = secureState;
-            saveUserChangesToDatabase();
-            showToast(secureState ? "Keamanan Biometrik diaktifkan." : "Keamanan Biometrik dinonaktifkan.", "info");
-        }
-
-        // ==================================================== -->
-        // MODALS HANDLING ACTIONS AND FORM SUBMISSIONS
-        // ==================================================== -->
-        function openModalTransaction() {
-            document.getElementById('modal-input-date').value = new Date().toISOString().split('T')[0];
-            setModalTransactionType('income');
-            document.getElementById('modal-transaction').classList.remove('hidden');
-        }
-
-        function closeModalTransaction() {
-            document.getElementById('modal-transaction').classList.add('hidden');
-        }
-
-        let modalTransactionType = "income";
-        function setModalTransactionType(type) {
-            modalTransactionType = type;
-            const btnInc = document.getElementById('modal-type-income');
-            const btnExp = document.getElementById('modal-type-expense');
-
-            if (type === 'income') {
-                btnInc.className = "py-1.5 rounded-lg text-[10px] font-bold bg-indigo-600 text-white transition border border-indigo-600";
-                btnExp.className = "py-1.5 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 transition border border-transparent";
-            } else {
-                btnExp.className = "py-1.5 rounded-lg text-[10px] font-bold bg-indigo-600 text-white transition border border-indigo-600";
-                btnInc.className = "py-1.5 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 transition border border-transparent";
-            }
-        }
-
-        function handleTransactionSubmit(e) {
-            e.preventDefault();
-            const amt = document.getElementById('modal-input-amount').value;
-            const desc = document.getElementById('modal-input-description').value.trim();
-            const cat = document.getElementById('modal-input-category').value;
-            const date = document.getElementById('modal-input-date').value;
-
-            const t = {
-                id: Date.now(),
-                type: modalTransactionType,
-                amount: Number(amt),
-                description: desc,
-                category: cat,
-                date: date
-            };
-
-            if (!state.transactions) state.transactions = [];
-            state.transactions.push(t);
-            saveUserChangesToDatabase();
-            closeModalTransaction();
-
-            // Refresh UI Views
-            if (currentTab === 'home') renderHomeStatements();
-            else if (currentTab === 'transactions') applyFilterTransactions();
-
-            showToast("Transaksi berhasil disimpan!", "success");
-        }
-
-        function openModalGoal() {
-            document.getElementById('modal-goal').classList.remove('hidden');
-        }
-
-        function closeModalGoal() {
-            document.getElementById('modal-goal').classList.add('hidden');
-        }
-
-        function handleGoalSubmit(e) {
-            e.preventDefault();
-            const name = document.getElementById('modal-goal-name').value.trim();
-            const target = document.getElementById('modal-goal-target').value;
-            const current = document.getElementById('modal-goal-current').value;
-
-            const goal = {
-                id: Date.now(),
-                name: name,
-                target: Number(target),
-                current: Number(current)
-            };
-
-            if (!state.goals) state.goals = [];
-            state.goals.push(goal);
-            saveUserChangesToDatabase();
-            closeModalGoal();
-            renderGoalsList();
-
-            showToast("Target tabungan berhasil dibuat!", "success");
-        }
-
-        function openEditProfileModal() {
-            document.getElementById('edit-profile-name').value = state.username;
-            document.getElementById('edit-profile-business').value = state.businessName;
-            document.getElementById('edit-profile-category').value = state.businessCategory || 'FnB';
-            document.getElementById('edit-profile-email').value = state.email;
-            document.getElementById('edit-profile-phone').value = state.phone || '';
-            document.getElementById('modal-edit-profile').classList.remove('hidden');
-        }
-
-        function closeEditProfileModal() {
-            document.getElementById('modal-edit-profile').classList.add('hidden');
-        }
-
-        function handleEditProfileSubmit(e) {
-            e.preventDefault();
-            state.username = document.getElementById('edit-profile-name').value.trim();
-            state.businessName = document.getElementById('edit-profile-business').value.trim();
-            state.businessCategory = document.getElementById('edit-profile-category').value;
-            state.email = document.getElementById('edit-profile-email').value.trim();
-            state.phone = document.getElementById('edit-profile-phone').value.trim();
-
-            saveUserChangesToDatabase();
-            closeEditProfileModal();
-            loadProfileSettingsData();
-            showToast("Data profil bisnis berhasil diubah!", "success");
-        }
-
-        // ==================================================== -->
-        // NOTIFICATIONS HUB (ArthaAlert)
-        // ==================================================== -->
-        function updateNotificationsBadgeCount() {
-            const badge = document.getElementById('notif-badge');
-            const notifications = state.notifications || [];
-            if (notifications.length > 0) {
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
-        }
-
-        function openNotificationModal() {
-            const container = document.getElementById('modal-notif-container');
-            container.innerHTML = '';
-
-            const notifications = state.notifications || [];
-            if (notifications.length === 0) {
-                container.innerHTML = `<p class="text-[10px] text-slate-400 py-6 text-center font-light">Tidak ada notifikasi aktif saat ini.</p>`;
-            } else {
-                notifications.forEach(n => {
-                    let iconClass = "text-indigo-500 bg-indigo-50 dark:bg-indigo-950/35";
-                    if (n.type === 'success') iconClass = "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/35";
-                    else if (n.type === 'warning') iconClass = "text-amber-500 bg-amber-50 dark:bg-amber-950/35";
-
-                    const item = document.createElement('div');
-                    item.className = "p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800 rounded-xl flex items-start space-x-2.5 select-none";
-                    item.innerHTML = `
-                        <span class="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] flex-shrink-0 ${iconClass}"><i class="fa-solid fa-bell"></i></span>
-                        <div class="flex-grow min-w-0">
-                            <div class="flex justify-between items-center w-full">
-                                <h4 class="text-[10px] font-bold text-slate-800 dark:text-white leading-tight truncate">${n.title}</h4>
-                                <span class="text-[7.5px] text-slate-400 flex-shrink-0 pl-1">${n.time}</span>
-                            </div>
-                            <p class="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5 leading-normal font-light">${n.message}</p>
-                        </div>
-                    `;
-                    container.appendChild(item);
-                });
-            }
-            document.getElementById('modal-notification').classList.remove('hidden');
-        }
-
-        function closeNotificationModal() {
-            document.getElementById('modal-notification').classList.add('hidden');
-        }
-
-        function addNotificationAlert(type, title, message) {
-            if (!state.notifications) state.notifications = [];
-            const alertObj = {
-                id: Date.now(),
-                type: type,
-                title: title,
-                message: message,
-                time: "Baru saja"
-            };
-            state.notifications.unshift(alertObj);
-            saveUserChangesToDatabase();
-            updateNotificationsBadgeCount();
-        }
-
-        function clearAllNotifications() {
-            state.notifications = [];
-            saveUserChangesToDatabase();
-            updateNotificationsBadgeCount();
-            closeNotificationModal();
-            showToast("Semua alert notifikasi berhasil dibersihkan.", "info");
-        }
-
-        // ==================================================== -->
-        // VOICE CASH RECOGNITION SYSTEM
-        // ==================================================== -->
-        let recognition = null;
-        let isListening = false;
-
-        function openVoiceCashModal() {
-            document.getElementById('modal-voicecash').classList.remove('hidden');
-            resetVoiceUIState();
-        }
-
-        function closeVoiceCashModal() {
-            if (isListening && recognition) {
-                recognition.stop();
-            }
-            document.getElementById('modal-voicecash').classList.add('hidden');
-        }
-
-        function resetVoiceUIState() {
-            isListening = false;
-            document.getElementById('voice-listening-bars').classList.add('hidden');
-            document.getElementById('voice-idle-icon').classList.remove('hidden');
-            document.getElementById('voice-transcript-text').innerText = '"Tekan tombol mikrofon di bawah lalu mulailah berbicara..."';
-            document.getElementById('voice-status-label').innerText = "Mulai Bicara";
-            document.getElementById('btn-voice-toggle').className = "w-11 h-11 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center text-md shadow hover:scale-105 transition active:scale-[0.95] cursor-pointer";
-        }
-
-        function toggleSpeechRecognition() {
-            const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-            
-            if (!SpeechAPI) {
-                showToast("Speech Recognition tidak didukung oleh browser ini.", "warning");
-                document.getElementById('voice-transcript-text').innerText = "Browser Anda tidak mendukung Voice recognition. Gunakan Google Chrome.";
-                return;
-            }
-
-            if (isListening) {
-                recognition.stop();
-                return;
-            }
-
-            recognition = new SpeechAPI();
-            recognition.lang = 'id-ID';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
-            recognition.onstart = () => {
-                isListening = true;
-                document.getElementById('voice-listening-bars').classList.remove('hidden');
-                document.getElementById('voice-idle-icon').classList.add('hidden');
-                document.getElementById('voice-transcript-text').innerText = '"Mendengarkan suara Anda..."';
-                document.getElementById('voice-status-label').innerText = "Mendengarkan...";
-                document.getElementById('btn-voice-toggle').className = "w-11 h-11 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center text-md shadow hover:scale-105 transition active:scale-[0.95] cursor-pointer animate-pulse";
-            };
-
-            recognition.onerror = () => {
-                showToast("Gagal memproses microphone.", "error");
-                resetVoiceUIState();
-            };
-
-            recognition.onend = () => {
-                resetVoiceUIState();
-            };
-
-            recognition.onresult = (e) => {
-                const text = e.results[0][0].transcript;
-                document.getElementById('voice-transcript-text').innerText = `"${text}"`;
-                parseSpokenFinancialSentence(text);
-            };
-
-            recognition.start();
-        }
-
-        // HEURISTIC NLP SENTENCE INTERPRETER
-        function parseSpokenFinancialSentence(phrase) {
-            const clean = phrase.toLowerCase();
-            let type = "expense";
-            let amount = 0;
-            let category = "Lainnya";
-            let description = "";
-
-            if (clean.includes("pemasukan") || clean.includes("pendapatan") || clean.includes("masuk") || clean.includes("omzet") || clean.includes("terima")) {
-                type = "income";
-            }
-
-            const matches = clean.match(/\d+(\.\d+)?/g);
-            let rawNum = 0;
-            if (matches && matches.length > 0) {
-                rawNum = Number(matches[0].replace(/\./g, ''));
-            }
-
-            if (clean.includes("juta")) {
-                amount = rawNum * 1000000;
-            } else if (clean.includes("ribu") || clean.includes("ratus")) {
-                amount = rawNum * 1000;
-            } else {
-                amount = rawNum;
-            }
-
-            // Category matching maps
-            if (clean.includes("penjualan") || clean.includes("order") || clean.includes("kopi") || clean.includes("pelanggan") || clean.includes("baju")) {
-                category = "Penjualan";
-            } else if (clean.includes("iklan") || clean.includes("marketing") || clean.includes("promosi") || clean.includes("ads")) {
-                category = "Marketing";
-            } else if (clean.includes("bensin") || clean.includes("transportasi") || clean.includes("ojek") || clean.includes("kurir")) {
-                category = "Transportasi";
-            } else if (clean.includes("sewa") || clean.includes("listrik") || clean.includes("operasional") || clean.includes("air")) {
-                category = "Operasional";
-            } else if (clean.includes("alat") || clean.includes("mesin") || clean.includes("investasi")) {
-                category = "Investasi";
-            } else if (clean.includes("gaji") || clean.includes("komisi") || clean.includes("fee")) {
-                category = "Gaji";
-            }
-
-            let label = clean
-                .replace("tambah", "")
-                .replace("pemasukan", "")
-                .replace("pengeluaran", "")
-                .replace("masuk", "")
-                .replace("untuk", "")
-                .replace("dari", "")
-                .replace(/\d+/g, "")
-                .replace("ribu", "")
-                .replace("juta", "")
-                .trim();
-
-            description = label.charAt(0).toUpperCase() + label.slice(1);
-            if (!description || description.length < 3) {
-                description = type === 'income' ? `Pemasukan Kasir (${category})` : `Biaya Keluar (${category})`;
-            }
-
-            if (amount <= 0) {
-                showToast("Nominal transaksi tidak terdeteksi dengan jelas.", "error");
-                return;
-            }
-
-            const transObj = {
-                id: Date.now(),
-                type: type,
-                amount: amount,
-                category: category,
-                description: description,
-                date: new Date().toISOString().split('T')[0]
-            };
-
-            if (!state.transactions) state.transactions = [];
-            state.transactions.push(transObj);
-            saveUserChangesToDatabase();
-
-            addNotificationAlert(
-                "success",
-                "VoiceCash Berhasil",
-                `Mencatat "${description}" senilai ${formatVal(amount)} secara instan.`
-            );
-
-            showToast(`VoiceCash Sukses: ${formatVal(amount)}`, "success");
-
-            setTimeout(() => {
-                closeVoiceCashModal();
-                if (currentTab === 'home') renderHomeStatements();
-                else if (currentTab === 'transactions') applyFilterTransactions();
-            }, 1000);
-        }
-
-        // ==================================================== -->
-        // ARTHA ASSISTANT CHATBOT PUSH SERVICES
-        // ==================================================== -->
         function openChatbotModal() {
             document.getElementById('modal-chatbot').classList.remove('hidden');
-            document.getElementById('api-key-input').value = state.apiKey || '';
+            // Populate stored API Key or Fallback constant
+            document.getElementById('api-key-input').value = state.apiKey || (GEMINI_API_KEY !== "YOUR_API_KEY" ? GEMINI_API_KEY : '');
             scrollToBottomChat();
         }
 
@@ -2309,7 +2011,7 @@
             const key = document.getElementById('api-key-input').value.trim();
             state.apiKey = key;
             saveUserChangesToDatabase();
-            showToast("Gemini API Key tersimpan dengan sukses!", "success");
+            showToast("API Key tersimpan dengan sukses!", "success");
             toggleApiKeyInput();
         }
 
@@ -2335,10 +2037,23 @@
                 ? 'bg-indigo-600 text-white rounded-tr-none' 
                 : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-tl-none border border-slate-100 dark:border-slate-700';
 
+            // Custom marked markdown compiler fallback
+            let parsedText = text;
+            try {
+                if (typeof marked !== 'undefined') {
+                    parsedText = marked.parse(text);
+                }
+            } catch (e) {
+                parsedText = text;
+            }
+
+            const timestamp = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
             row.innerHTML = `
                 ${!isUser ? `<div class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 flex items-center justify-center text-[10px] flex-shrink-0">${icon}</div>` : ''}
                 <div class="${bubbleBg} p-2.5 rounded-xl text-[10px] leading-relaxed shadow-sm max-w-[80%]">
-                    ${text}
+                    <div class="prose prose-sm dark:prose-invert text-[10px] leading-relaxed break-words">${parsedText}</div>
+                    <span class="text-[7px] text-slate-400 mt-1 block text-right">${timestamp}</span>
                 </div>
                 ${isUser ? `<div class="w-6 h-6 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-[10px] flex-shrink-0">${icon}</div>` : ''}
             `;
@@ -2375,45 +2090,46 @@
             const score = calculateArthaScore();
 
             if (q.includes("analisis") || q.includes("kondisi")) {
-                return `Berdasarkan pembukuan real-time dari usaha <strong>${state.businessName}</strong>, berikut ringkasannya:
-                <br><br>
-                • <strong>Total Omzet</strong>: ${formatVal(totalIn)}<br>
-                • <strong>Biaya Keluar</strong>: ${formatVal(totalOut)}<br>
-                • <strong>Laba Usaha</strong>: ${formatVal(profit)} (Margin: ${totalIn > 0 ? ((profit/totalIn)*100).toFixed(1) : 0}%)<br>
-                • <strong>ArthaScore</strong>: ${score}/100 (${getScoreStatus(score).label})
-                <br><br>
-                Keuangan usaha saat ini tergolong <strong>${getScoreStatus(score).label === 'Healthy' ? 'Sangat Sehat & Stabil' : 'Butuh Penyesuaian'}</strong>. Rekomendasi: Pertahankan rasio biaya agar tidak melampaui 30% dari total pendapatan bulanan Anda.`;
+                return `Berdasarkan pembukuan real-time dari usaha **${state.businessName}**, berikut ringkasannya:
+                \n\n
+                * **Total Omzet**: ${formatVal(totalIn)}
+                * **Biaya Keluar**: ${formatVal(totalOut)}
+                * **Laba Usaha**: ${formatVal(profit)} (Margin: ${totalIn > 0 ? ((profit/totalIn)*100).toFixed(1) : 0}%)
+                * **ArthaScore**: ${score}/100 (${getScoreStatus(score).label})
+                \n\n
+                Keuangan usaha saat ini tergolong **${getScoreStatus(score).label === 'Healthy' ? 'Sangat Sehat & Stabil' : 'Butuh Penyesuaian'}**. Rekomendasi: Pertahankan rasio biaya agar tidak melampaui 30% dari total pendapatan bulanan Anda.`;
             }
 
             if (q.includes("tips") || q.includes("entrepreneur") || q.includes("strategi")) {
-                return `Berikut tips bisnis taktis untuk usaha kategori <strong>${state.businessCategory || 'UMKM'}</strong>:
-                <br><br>
-                1. <strong>Fokus Retensi Pelanggan</strong>: Menjaga relasi pelanggan lama 5x lebih hemat biaya daripada akuisisi pelanggan baru.<br>
-                2. <strong>Rasio Cadangan Kas</strong>: Cadangkan minimal 15% keuntungan ke tabungan darurat (seperti menu Target Tabungan Anda saat ini).<br>
-                3. <strong>Optimasi Margin</strong>: Tinjau supplier harian Anda berkala setiap 3 bulan untuk mencari ruang efisiensi biaya.`;
+                return `Berikut tips bisnis taktis untuk usaha kategori **${state.businessCategory || 'UMKM'}**:
+                \n\n
+                1. **Fokus Retensi Pelanggan**: Menjaga relasi pelanggan lama 5x lebih hemat biaya daripada akuisisi pelanggan baru.
+                2. **Rasio Cadangan Kas**: Cadangkan minimal 15% keuntungan ke tabungan darurat (seperti menu Target Tabungan Anda saat ini).
+                3. **Optimasi Margin**: Tinjau supplier harian Anda berkala setiap 3 bulan untuk mencari ruang efisiensi biaya.`;
             }
 
             if (q.includes("hemat") || q.includes("kurang") || q.includes("pengeluaran")) {
-                return `Langkah taktis memangkas biaya operasional senilai <strong>${formatVal(totalOut)}</strong> pada usaha Anda:
-                <br><br>
-                • <strong>Evaluasi Langganan Digital</strong>: Hentikan tool / software yang tidak berkontribusi langsung pada penjualan harian.<br>
-                • <strong>Pemasaran Organik</strong>: Maksimalkan promosi gratis via konten viral TikTok / Reels dibandingkan mengandalkan iklan berbayar secara berlebihan.<br>
-                • <strong>Kontrol Stok Ketat</strong>: Hindari penumpukan bahan baku tidak terjual yang mengikat arus kas usaha Anda.`;
+                return `Langkah taktis memangkas biaya operasional senilai **${formatVal(totalOut)}** pada usaha Anda:
+                \n\n
+                * **Evaluasi Langganan Digital**: Hentikan tool / software yang tidak berkontribusi langsung pada penjualan harian.
+                * **Pemasaran Organik**: Maksimalkan promosi gratis via konten viral TikTok / Reels dibanding mengandalkan iklan berbayar secara berlebihan.
+                * **Kontrol Stok Ketat**: Hindari penumpukan bahan baku tidak terjual yang mengikat arus kas usaha Anda.`;
             }
 
             if (q.includes("omzet") || q.includes("untung") || q.includes("profit")) {
                 return `Strategi menaikkan margin laba bersih usaha Anda:
-                <br><br>
-                • <strong>Bundle Up-selling</strong>: Tawarkan paket produk gabungan yang memberikan nilai lebih dengan harga khusus.<br>
-                • <strong>Sistem Komisi Karyawan</strong>: Tautkan bonus staf dengan target harian untuk memicu produktivitas penjualan.<br>
-                • <strong>Kurangi Waste/Sisa</strong>: Optimalkan manajemen logistik operasional guna menekan kerugian sisa bahan baku.`;
+                \n\n
+                * **Bundle Up-selling**: Tawarkan paket produk gabungan yang memberikan nilai lebih dengan harga khusus.
+                * **Sistem Komisi Karyawan**: Tautkan bonus staf dengan target harian untuk memicu produktivitas penjualan.
+                * **Kurangi Waste/Sisa**: Optimalkan manajemen logistik operasional guna menekan kerugian sisa bahan baku.`;
             }
 
             return `Terima kasih atas diskusinya! Saya siap membantu menjawab topik keuangan:
-            <br><br>
-            • Memberikan <strong>analisis / kondisi bisnis</strong> Anda.<br>
-            • Strategi <strong>menghemat pengeluaran</strong> harian.<br>
-            • Tips <strong>meningkatkan profit</strong> & margin usaha.<br><br>
+            \n\n
+            * Memberikan **analisis / kondisi bisnis** Anda.
+            * Strategi **menghemat pengeluaran** harian.
+            * Tips **meningkatkan profit** & margin usaha.
+            \n\n
             Silakan klik opsi pintasan di atas atau tulis pertanyaan Anda dengan spesifik.`;
         }
 
@@ -2440,9 +2156,10 @@
             box.appendChild(thinkingRow);
             scrollToBottomChat();
 
-            const key = state.apiKey || "";
+            // Check if active key is saved in user profile or constant placeholder is modified
+            const activeApiKey = state.apiKey || (GEMINI_API_KEY !== "YOUR_API_KEY" ? GEMINI_API_KEY : "");
 
-            if (!key) {
+            if (!activeApiKey) {
                 // Return fallback rule engine simulation after realistic delay
                 setTimeout(() => {
                     const response = evaluateLocalContextAnswers(text);
@@ -2453,7 +2170,7 @@
                 return;
             }
 
-            // Calculations parameters parameters
+            // Calculations parameters for financial contexts
             let totalIn = 0;
             let totalOut = 0;
             const transactions = state.transactions || [];
@@ -2464,8 +2181,19 @@
             const profit = totalIn - totalOut;
             const score = calculateArthaScore();
 
-            // Prepare context parameter instruction payload
-            const systemPrompt = `You are "Artha Assistant", a premium Indonesian mobile business financial advisor. Help the user manage finances for their business "${state.businessName}" (Category: "${state.businessCategory || 'UMKM'}"). Here is their current financial status: Balance: ${totalIn - totalOut}, Income: ${totalIn}, Expense: ${totalOut}, ArthaScore: ${score}. Answer concisely, politely, and as an expert financial planner. Encourage them. Use Indonesian language. Format with bullet points for small mobile screens.`;
+            // Prepare professional system parameter instruction payload
+            const systemPrompt = `Anda adalah "Artha Assistant", konsultan bisnis dan financial advisor profesional untuk entrepreneur muda Indonesia. Fokus pada: manajemen keuangan usaha, cash flow, budgeting, pengembangan bisnis, efisiensi operasional, strategi peningkatan profit, pengelolaan pengeluaran, pertumbuhan UMKM, dan business sustainability.
+            Jawaban harus profesional, realistis, mudah dipahami, actionable, tidak terlalu formal, dan relevan dengan kondisi entrepreneur muda.
+            
+            Kondisi Usaha Aktif Saat Ini:
+            - Nama Bisnis: ${state.businessName} (Kategori: ${state.businessCategory || 'UMKM'})
+            - Owner: ${state.username}
+            - Total Pendapatan: ${formatVal(totalIn)}
+            - Total Pengeluaran: ${formatVal(totalOut)}
+            - Laba Bersih: ${formatVal(profit)}
+            - ArthaScore: ${score}/100
+            
+            Berikan jawaban yang terstruktur dengan format Markdown yang rapi (bullet points, bolding, atau sub-judul jika diperlukan). Tanggapi dalam bahasa Indonesia yang ramah, taktis, dan mendalam.`;
 
             const payload = {
                 contents: [{ parts: [{ text: text }] }],
@@ -2474,7 +2202,7 @@
                 }
             };
 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${key}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${activeApiKey}`;
 
             try {
                 const response = await fetch(apiUrl, {
@@ -2492,13 +2220,13 @@
                 if (textResponse) {
                     appendMessageBubble('model', textResponse);
                 } else {
-                    appendMessageBubble('model', "Mohon maaf, sistem AI Gemini sedang sibuk. Layanan luring akan menjawab otomatis.");
+                    appendMessageBubble('model', "Mohon maaf, sistem AI Gemini sedang mengalami kendala. Mengalihkan ke sistem asisten lokal.\n\n" + evaluateLocalContextAnswers(text));
                 }
             } catch (err) {
                 const loader = document.getElementById('thinking-bubble');
                 if (loader) loader.remove();
                 const offlineResponse = evaluateLocalContextAnswers(text);
-                appendMessageBubble('model', `[Koneksi gagal, Mengaktifkan Engine Luring] <br><br>${offlineResponse}`);
+                appendMessageBubble('model', `[Koneksi API Gagal, Mengaktifkan Asisten Lokal] \n\n${offlineResponse}`);
             }
         }
 
