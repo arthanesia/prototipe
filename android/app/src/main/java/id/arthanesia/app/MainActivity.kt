@@ -11,9 +11,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -262,7 +264,7 @@ private fun AppTopBar(page: Page, business: String, onTheme: () -> Unit, dark: B
 @Composable
 private fun ScreenColumn(content: @Composable ColumnScope.() -> Unit) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(horizontal = 17.dp)
-        .padding(top = 15.dp, bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp), content = content)
+        .padding(top = 15.dp, bottom = 18.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp), content = content)
 }
 
 @Composable
@@ -332,7 +334,7 @@ private fun HomeScreen(owner: String, business: String, balance: Long, income: L
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             QuickTile("Transaksi", Icons.Default.ReceiptLong, Modifier.weight(1f)) { onNavigate(Page.TRANSACTIONS) }
             QuickTile("Target", Icons.Default.Flag, Modifier.weight(1f)) { onNavigate(Page.GOALS) }
-            QuickTile("Zakat", Icons.Default.Mosque, Modifier.weight(1f)) { onNavigate(Page.ZAKAT) }
+            QuickTile("Zakat", Icons.Default.AccountBalance, Modifier.weight(1f)) { onNavigate(Page.ZAKAT) }
         }
         SectionTitle("Smart Insight", "Ringkasan berbasis transaksi lokal")
         InsightCard(if (income >= expense) "Arus kas positif" else "Perlu evaluasi pengeluaran",
