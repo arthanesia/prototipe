@@ -285,17 +285,18 @@
 
 
     #modal-entry-method{align-items:flex-end!important}
-    #modal-entry-method-panel{transform:translateY(100%)}
-    #modal-entry-method:not(.hidden) #modal-entry-method-panel{transform:translateY(0)}
-    #modal-receipt-panel{transform:translateY(100%)}
-    #modal-receipt:not(.hidden) #modal-receipt-panel{transform:translateY(0)}
+    #modal-entry-method-panel,#modal-receipt-panel{transition:transform .3s ease!important;transform:translateY(100%)!important}
+    #modal-entry-method:not(.hidden):not(.is-closing) #modal-entry-method-panel,
+    #modal-receipt:not(.hidden):not(.is-closing) #modal-receipt-panel{transform:translateY(0)!important}
+    #modal-entry-method.is-closing #modal-entry-method-panel,
+    #modal-receipt.is-closing #modal-receipt-panel{transform:translateY(100%)!important}
     @media(min-width:521px){
       #modal-entry-method{align-items:center!important}
-      #modal-entry-method-panel{transform:scale(.96)}
-      #modal-entry-method:not(.hidden) #modal-entry-method-panel{transform:scale(1)}
+      #modal-entry-method-panel{transform:translateY(100%)!important}
+      #modal-entry-method:not(.hidden):not(.is-closing) #modal-entry-method-panel{transform:translateY(0)!important}
       #modal-receipt{align-items:center!important;justify-content:center!important;padding:14px!important}
-      #modal-receipt-panel{border-radius:24px!important;transform:scale(.97)}
-      #modal-receipt:not(.hidden) #modal-receipt-panel{transform:scale(1)}
+      #modal-receipt-panel{border-radius:24px!important;transform:translateY(100%)!important}
+      #modal-receipt:not(.hidden):not(.is-closing) #modal-receipt-panel{transform:translateY(0)!important}
     }
 
 </style>
@@ -1590,8 +1591,16 @@
         function closeVoiceCashModal() { closeModalSafely('modal-voicecash', 'modal-voicecash-panel'); }
         let receiptObjectUrl = null;
         let receiptOcrReady = false;
-        function openEntryMethodModal() { openModalSafely("modal-entry-method","modal-entry-method-panel"); }
-        function closeEntryMethodModal() { closeModalSafely("modal-entry-method","modal-entry-method-panel"); }
+        function openEntryMethodModal() {
+            const modal = document.getElementById("modal-entry-method");
+            modal.classList.remove("is-closing");
+            openModalSafely("modal-entry-method","modal-entry-method-panel");
+        }
+        function closeEntryMethodModal() {
+            const modal = document.getElementById("modal-entry-method");
+            modal.classList.add("is-closing","opacity-0");
+            setTimeout(() => { modal.classList.add("hidden"); modal.classList.remove("is-closing"); }, 300);
+        }
         function chooseManualEntry() {
             closeEntryMethodModal();
             setTimeout(() => { openModalTransaction(); setModalTransactionType("income"); }, 320);
@@ -1606,6 +1615,7 @@
         }
         function openReceiptModal() {
             receiptOcrReady = false;
+            document.getElementById("modal-receipt").classList.remove("is-closing");
             const amount = document.getElementById("receipt-result-amount");
             const description = document.getElementById("receipt-result-description");
             const status = document.getElementById("receipt-scan-status");
@@ -1621,7 +1631,9 @@
             openModalSafely("modal-receipt","modal-receipt-panel");
         }
         function closeReceiptModal() {
-            closeModalSafely("modal-receipt","modal-receipt-panel");
+            const modal = document.getElementById("modal-receipt");
+            modal.classList.add("is-closing","opacity-0");
+            setTimeout(() => { modal.classList.add("hidden"); modal.classList.remove("is-closing"); }, 300);
             if (receiptObjectUrl) { URL.revokeObjectURL(receiptObjectUrl); receiptObjectUrl = null; }
         }
         async function scanReceiptPhoto(event) {
