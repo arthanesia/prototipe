@@ -213,7 +213,92 @@
 
     
     #screen-auth.hidden{display:none!important}
-    </style>
+    
+    /* MOBILE APP REVIEW MODE — mirror the native Compose APK */
+    html,body{width:100%;height:100%;min-height:100%;margin:0}
+    body{overflow:hidden!important;background:#edf0f8!important}
+    .app-shell{width:100%!important;height:100dvh!important;min-height:100dvh!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;background:radial-gradient(circle at 50% 10%,#f8f9ff 0,#edf0f8 68%)!important}
+    .phone-frame{position:relative!important;width:min(100vw,430px)!important;max-width:430px!important;height:min(900px,calc(100dvh - 28px))!important;min-height:580px!important;margin:0 auto!important;border:7px solid #fff!important;border-radius:34px!important;overflow:hidden!important;box-shadow:0 24px 80px rgba(29,36,75,.18)!important;background:#f6f7fc!important}
+    .phone-notch{display:none!important}
+    .device-status{display:none!important}
+    #screen-main-app{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;background:#f6f7fc!important}
+    #screen-main-app.hidden{display:none!important}
+    #screen-main-app>header{position:absolute!important;left:0!important;right:0!important;top:0!important;width:100%!important;height:64px!important;padding:0 14px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;background:rgba(255,255,255,.97)!important;border-bottom:1px solid #e9ebf4!important;box-shadow:0 2px 12px rgba(35,42,90,.035)!important;z-index:35!important}
+    #screen-main-app>header>div{margin:0!important;display:flex!important;align-items:center!important}
+    #screen-main-app>header>div:first-child{display:flex!important;gap:8px!important}
+    #screen-main-app>header>div:first-child>div{width:35px!important;height:35px!important;border-radius:11px!important;background:#fff!important;box-shadow:none!important}
+    #screen-main-app>header .arthanesia-logo{width:34px!important;height:34px!important;object-fit:contain!important}
+    #screen-main-app>header>div:first-child>span{font-size:15px!important;font-weight:800!important;color:#25294c!important;letter-spacing:-.35px!important}
+    #screen-main-app>header>div:last-child{gap:7px!important}
+    #screen-main-app>header button{width:34px!important;height:34px!important;border-radius:11px!important;background:#f7f7fc!important;border:1px solid #eceef6!important;color:#68718b!important;box-shadow:none!important}
+    #screen-main-app>header button i{font-size:12px!important}
+    #app-view-container{position:absolute!important;left:0!important;right:0!important;top:64px!important;bottom:73px!important;width:100%!important;height:auto!important;min-height:0!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:16px 14px 24px!important;background:#f6f7fc!important;scrollbar-width:thin!important;scrollbar-color:#d7d9ea transparent!important}
+    #screen-main-app>nav{position:absolute!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;width:100%!important;height:73px!important;min-height:73px!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-around!important;gap:0!important;padding:5px 5px calc(5px + env(safe-area-inset-bottom))!important;background:rgba(255,255,255,.98)!important;border-top:1px solid #e8eaf2!important;border-right:0!important;box-shadow:0 -6px 20px rgba(30,38,80,.045)!important;z-index:45!important}
+    #screen-main-app>nav .desktop-brand,#screen-main-app>nav .desktop-nav-label,#screen-main-app>nav .desktop-extra-nav{display:none!important}
+    #screen-main-app>nav>button:not(.desktop-extra-nav){width:20%!important;min-width:0!important;height:60px!important;min-height:60px!important;flex:1 1 20%!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;padding:4px 0!important;border:0!important;border-radius:11px!important;background:transparent!important;color:#9aa1b5!important}
+    #screen-main-app>nav>button:not(.desktop-extra-nav) i{font-size:16px!important;line-height:1!important;margin:0!important;width:auto!important}
+    #screen-main-app>nav>button:not(.desktop-extra-nav) span{font-size:9px!important;line-height:1.1!important;font-weight:700!important;letter-spacing:0!important}
+    #screen-main-app>nav>button:not(.desktop-extra-nav).text-indigo-600,#screen-main-app>nav>button:not(.desktop-extra-nav).dark\:text-indigo-400{background:#f0efff!important;color:#5b55ed!important}
+    #tab-home:not(.hidden){display:flex!important;flex-direction:column!important;gap:14px!important;width:100%!important}
+    #tab-home>div{width:100%!important;grid-column:auto!important;grid-row:auto!important}
+    #tab-home>div:nth-child(2){min-height:0!important;border-radius:21px!important;padding:20px!important}
+    #tab-home>div:nth-child(3){display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important}
+    #tab-home>div:nth-child(3)>button{min-height:82px!important;padding:9px 4px!important;border-radius:14px!important}
+    #tab-home>div:nth-child(3)>button span{font-size:9px!important}
+    #tab-home>div:nth-child(5),#tab-home>div:nth-child(6){width:100%!important;padding:15px!important;border-radius:16px!important}
+    #tab-transactions:not(.hidden),#tab-analytics:not(.hidden),#tab-goals:not(.hidden){width:100%!important;max-width:none!important;margin:0!important}
+    #tab-transactions>div:first-child,#tab-analytics>div:first-child,#tab-goals>div:first-child{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;margin-bottom:14px!important}
+    #tab-goals #goals-list{display:grid!important;grid-template-columns:1fr!important;gap:12px!important}
+    #tab-profile:not(.hidden){display:flex!important;flex-direction:column!important;gap:14px!important;width:100%!important}
+    #tab-profile>div{width:100%!important;grid-column:auto!important;padding:15px!important;border-radius:16px!important}
+    #tab-profile .text-center{display:flex!important;align-items:center!important;text-align:left!important;gap:12px!important}
+    #tab-profile .text-center .relative.w-16{margin:0!important;flex:none!important}
+    #tab-profile .text-center .mt-3{margin:0 0 0 auto!important}
+    #master-trans-list{display:grid!important;grid-template-columns:1fr!important;gap:10px!important}
+    #master-trans-list>div{background:#fff!important;border:1px solid #eceef5!important;border-radius:14px!important;box-shadow:0 4px 14px rgba(28,38,75,.045)!important}
+    #tab-home h3,#tab-transactions h3,#tab-analytics h3,#tab-goals h3,#tab-profile h3{font-family:'Inter',sans-serif!important}
+    .auth-showcase{display:none!important}
+    #screen-auth{position:absolute!important;inset:0!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:center!important;gap:0!important;padding:23px 18px!important;overflow-y:auto!important;background:linear-gradient(180deg,#f2f1ff 0%,#fafbff 60%)!important}
+    #screen-auth>.flex-1:not(.auth-showcase){display:flex!important;flex-direction:column!important;justify-content:center!important;width:100%!important;max-width:390px!important;margin:0 auto!important;padding:0!important;overflow:visible!important}
+    #screen-auth>.flex-1:not(.auth-showcase) .text-center{padding-top:0!important;margin-bottom:22px!important}
+    #screen-auth>.flex-1:not(.auth-showcase) .text-center>div:first-child{width:64px!important;height:64px!important;border-radius:19px!important;margin:0 auto 12px!important;box-shadow:0 10px 25px rgba(91,85,237,.16)!important}
+    #screen-auth>.flex-1:not(.auth-showcase) .arthanesia-logo{width:58px!important;height:54px!important}
+    #screen-auth>.flex-1:not(.auth-showcase) h2{font-size:23px!important;color:#24284b!important}
+    #screen-auth>.flex-1:not(.auth-showcase) .text-center p{font-size:11px!important}
+    #screen-auth>.flex-1:not(.auth-showcase)>div:last-child{background:#fff!important;border:1px solid #eceef5!important;border-radius:22px!important;padding:21px!important;box-shadow:0 14px 40px rgba(31,40,85,.075)!important}
+    #screen-auth>div:last-child:not(.auth-showcase){display:none!important}
+    #screen-auth input{min-height:44px!important;border-radius:11px!important;font-size:12px!important}
+    #screen-auth button[type=submit]{min-height:46px!important;border-radius:12px!important;font-size:12px!important}
+    #screen-auth.hidden{display:none!important}
+    #screen-main-app .rounded-3xl{border-radius:17px!important}
+    #screen-main-app .shadow-sm{box-shadow:0 4px 16px rgba(33,42,83,.045)!important}
+    #screen-main-app .text-slate-800{color:#202440}
+    #modal-entry-method,#modal-receipt{z-index:100!important}
+    #modal-entry-method-panel,#modal-receipt-panel{width:100%!important;max-width:390px!important;border-radius:25px!important}
+    #modal-transaction-panel,#modal-zakat-panel,#modal-voicecash-panel{max-width:430px!important;margin-left:auto!important;margin-right:auto!important}
+    @media(max-width:520px){
+      body{background:#f6f7fc!important}
+      .app-shell{width:100vw!important;height:100dvh!important;min-height:100dvh!important;align-items:stretch!important;justify-content:stretch!important;background:#f6f7fc!important}
+      .phone-frame{width:100vw!important;max-width:none!important;height:100dvh!important;min-height:100dvh!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+      #app-view-container{padding-left:14px!important;padding-right:14px!important}
+    }
+
+
+    #modal-entry-method{align-items:flex-end!important}
+    #modal-entry-method-panel{transform:translateY(100%)}
+    #modal-entry-method:not(.hidden) #modal-entry-method-panel{transform:translateY(0)}
+    #modal-receipt-panel{transform:translateY(100%)}
+    #modal-receipt:not(.hidden) #modal-receipt-panel{transform:translateY(0)}
+    @media(min-width:521px){
+      #modal-entry-method{align-items:center!important}
+      #modal-entry-method-panel{transform:scale(.96)}
+      #modal-entry-method:not(.hidden) #modal-entry-method-panel{transform:scale(1)}
+      #modal-receipt{align-items:center!important;justify-content:center!important;padding:14px!important}
+      #modal-receipt-panel{border-radius:24px!important;transform:scale(.97)}
+      #modal-receipt:not(.hidden) #modal-receipt-panel{transform:scale(1)}
+    }
+
+</style>
 <style>.arthanesia-logo{max-width:100%;}</style>
 </head>
 <body class="bg-slate-950 font-sans text-slate-800 dark:text-slate-100 antialiased overflow-hidden selection:bg-indigo-500/30 transition-colors duration-300" style="height: 100dvh; width: 100vw;">
@@ -372,13 +457,13 @@
 
                         <!-- Quick Actions Grid -->
                         <div class="grid grid-cols-4 gap-2">
-                            <button onclick="openModalTransaction()" class="p-3 bg-white dark:bg-fintech-darkCard rounded-2xl flex flex-col items-center justify-center space-y-2 border border-slate-100 dark:border-slate-800 shadow-sm active:scale-95 transition-transform">
+                            <button onclick="openEntryMethodModal()" class="p-3 bg-white dark:bg-fintech-darkCard rounded-2xl flex flex-col items-center justify-center space-y-2 border border-slate-100 dark:border-slate-800 shadow-sm active:scale-95 transition-transform">
                                 <div class="w-9 h-9 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center"><i class="fa-solid fa-plus text-sm"></i></div>
                                 <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300">Catat</span>
                             </button>
-                            <button onclick="openVoiceCashModal()" class="p-3 bg-white dark:bg-fintech-darkCard rounded-2xl flex flex-col items-center justify-center space-y-2 border border-slate-100 dark:border-slate-800 shadow-sm active:scale-95 transition-transform">
+                            <button onclick="openEntryMethodModal()" class="p-3 bg-white dark:bg-fintech-darkCard rounded-2xl flex flex-col items-center justify-center space-y-2 border border-slate-100 dark:border-slate-800 shadow-sm active:scale-95 transition-transform">
                                 <div class="w-9 h-9 rounded-full bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center relative"><i class="fa-solid fa-microphone text-sm"></i><span class="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full animate-ping"></span></div>
-                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300">Suara</span>
+                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300">Metode</span>
                             </button>
                             <button onclick="switchAppTab('analytics')" class="p-3 bg-white dark:bg-fintech-darkCard rounded-2xl flex flex-col items-center justify-center space-y-2 border border-slate-100 dark:border-slate-800 shadow-sm active:scale-95 transition-transform">
                                 <div class="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center"><i class="fa-solid fa-chart-pie text-sm"></i></div>
@@ -701,6 +786,66 @@
             </div>
 
             <!-- OTHER MODALS (Structure preserved, logic updated via JS) -->
+            <!-- INPUT METHOD SELECTOR -->
+            <div id="modal-entry-method" class="absolute inset-0 bg-black/55 z-[95] flex items-end sm:items-center justify-center p-3 hidden opacity-0 transition-opacity duration-300 pointer-events-auto">
+                <div id="modal-entry-method-panel" class="w-full max-w-[390px] bg-white dark:bg-fintech-darkCard rounded-3xl p-5 space-y-4 transform transition-transform translate-y-full sm:scale-95">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-[9px] font-black tracking-[1.5px] uppercase text-indigo-500">Catat keuangan</p>
+                            <h3 class="text-base font-black text-slate-800 dark:text-white mt-1">Pilih metode pencatatan</h3>
+                            <p class="text-[10px] text-slate-500 mt-1">Pilih cara yang paling mudah untukmu.</p>
+                        </div>
+                        <button onclick="closeEntryMethodModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="chooseReceiptEntry()" class="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-left active:scale-[.99]">
+                            <span class="w-11 h-11 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center text-lg"><i class="fa-solid fa-camera"></i></span>
+                            <span class="flex-1"><b class="block text-[12px] text-slate-800 dark:text-white">Foto struk</b><small class="block text-[9px] text-slate-500 mt-1">Pindai struk dan ambil nominal otomatis</small></span>
+                            <i class="fa-solid fa-chevron-right text-slate-400 text-[10px]"></i>
+                        </button>
+                        <button onclick="chooseVoiceEntry()" class="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-left active:scale-[.99]">
+                            <span class="w-11 h-11 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg"><i class="fa-solid fa-microphone"></i></span>
+                            <span class="flex-1"><b class="block text-[12px] text-slate-800 dark:text-white">Suara · VoiceCash</b><small class="block text-[9px] text-slate-500 mt-1">Ucapkan jenis, nominal, dan keterangan transaksi</small></span>
+                            <i class="fa-solid fa-chevron-right text-slate-400 text-[10px]"></i>
+                        </button>
+                        <button onclick="chooseManualEntry()" class="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-left active:scale-[.99]">
+                            <span class="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg"><i class="fa-solid fa-pen-to-square"></i></span>
+                            <span class="flex-1"><b class="block text-[12px] text-slate-800 dark:text-white">Manual</b><small class="block text-[9px] text-slate-500 mt-1">Isi nominal, mata uang, kategori, dan deskripsi sendiri</small></span>
+                            <i class="fa-solid fa-chevron-right text-slate-400 text-[10px]"></i>
+                        </button>
+                    </div>
+                    <p class="text-[8px] text-slate-400 text-center">Kamu tetap dapat memeriksa dan mengoreksi data sebelum disimpan.</p>
+                </div>
+            </div>
+
+            <!-- RECEIPT SCANNER — separate from manual transaction form -->
+            <div id="modal-receipt" class="absolute inset-0 bg-black/60 z-[96] flex flex-col justify-end hidden opacity-0 transition-opacity duration-300 pointer-events-auto">
+                <div id="modal-receipt-panel" class="w-full max-w-[430px] mx-auto bg-white dark:bg-fintech-darkCard rounded-t-3xl p-5 space-y-4 transform transition-transform translate-y-full overflow-y-auto" style="max-height:90dvh">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-[9px] font-black uppercase tracking-[1.4px] text-violet-500">Receipt scanner</p>
+                            <h3 class="text-base font-black text-slate-800 dark:text-white mt-1">Catat dari foto struk</h3>
+                            <p class="text-[10px] text-slate-500 mt-1">Ambil foto atau pilih gambar dari galeri.</p>
+                        </div>
+                        <button onclick="closeReceiptModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <label class="block w-full rounded-2xl border-2 border-dashed border-violet-200 dark:border-violet-800 bg-violet-50/70 dark:bg-violet-950/20 p-5 text-center cursor-pointer">
+                        <img id="receipt-preview-image" class="hidden max-h-44 mx-auto mb-3 rounded-xl object-contain" alt="Pratinjau foto struk">
+                        <span class="w-12 h-12 mx-auto rounded-2xl bg-white dark:bg-slate-800 text-violet-600 flex items-center justify-center text-xl"><i class="fa-solid fa-camera"></i></span>
+                        <b class="block text-[11px] mt-2 text-slate-800 dark:text-white">Ambil / pilih foto struk</b>
+                        <small class="block text-[9px] text-slate-500 mt-1">Foto jelas, tidak terpotong, dan cahaya cukup</small>
+                        <input id="receipt-photo-input" type="file" accept="image/*" capture="environment" class="hidden" onchange="scanReceiptPhoto(event)">
+                    </label>
+                    <div id="receipt-scan-status" class="text-[10px] text-slate-500 text-center">Belum ada foto yang dipindai.</div>
+                    <div class="grid grid-cols-1 gap-3">
+                        <div><label class="block text-[9px] font-black text-slate-500 uppercase mb-1">Deskripsi hasil OCR</label><input id="receipt-result-description" type="text" placeholder="Nama toko / keterangan" class="w-full px-3 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs"></div>
+                        <div><label class="block text-[9px] font-black text-slate-500 uppercase mb-1">Total transaksi</label><input id="receipt-result-amount" type="number" min="1" step="any" placeholder="Nominal yang terdeteksi" class="w-full px-3 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold"></div>
+                    </div>
+                    <button id="receipt-use-result" onclick="useReceiptResult()" disabled class="w-full py-3.5 rounded-xl bg-indigo-600 text-white text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed">Gunakan hasil & periksa transaksi</button>
+                    <p class="text-[8px] text-slate-400 text-center">OCR hanya memberi saran. Periksa total, deskripsi, dan kategori sebelum menyimpan.</p>
+                </div>
+            </div>
+
             <!-- 2. VOICECASH -->
             <div id="modal-voicecash" class="absolute inset-0 bg-black/70 z-[80] flex items-center justify-center p-5 hidden opacity-0 transition-opacity duration-300 pointer-events-auto">
                 <div class="bg-white dark:bg-fintech-darkCard w-full max-w-[320px] rounded-3xl p-6 text-center space-y-4 relative transform transition-transform scale-95" id="modal-voicecash-panel">
@@ -743,16 +888,6 @@
                                     <div class="relative flex-1"><input id="modal-input-amount" oninput="updateCurrencyPreview()" required type="number" placeholder="0" step="any" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500 transition"></div>
                                 </div>
                                 <p id="modal-currency-preview" class="text-[9px] font-bold text-indigo-500 ml-1 h-3"></p>
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Foto Struk</label>
-                                <div class="flex items-center gap-2">
-                                    <label class="flex-1 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl text-[10px] font-bold text-indigo-600 dark:text-indigo-300 cursor-pointer text-center">
-                                        <i class="fa-solid fa-camera mr-1"></i> Ambil / pilih foto struk
-                                        <input id="receipt-photo-input" type="file" accept="image/*" capture="environment" class="hidden" onchange="scanReceiptPhoto(event)">
-                                    </label>
-                                    <span id="receipt-scan-status" class="text-[9px] text-slate-400 min-w-[76px]">Belum dipindai</span>
-                                </div>
                             </div>
                             <div class="space-y-1.5">
                                 <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Keterangan Singkat</label>
@@ -1453,49 +1588,110 @@
         // VOICECASH
         function openVoiceCashModal() { openModalSafely('modal-voicecash', 'modal-voicecash-panel'); }
         function closeVoiceCashModal() { closeModalSafely('modal-voicecash', 'modal-voicecash-panel'); }
+        let receiptObjectUrl = null;
+        let receiptOcrReady = false;
+        function openEntryMethodModal() { openModalSafely("modal-entry-method","modal-entry-method-panel"); }
+        function closeEntryMethodModal() { closeModalSafely("modal-entry-method","modal-entry-method-panel"); }
+        function chooseManualEntry() {
+            closeEntryMethodModal();
+            setTimeout(() => { openModalTransaction(); setModalTransactionType("income"); }, 320);
+        }
+        function chooseVoiceEntry() {
+            closeEntryMethodModal();
+            setTimeout(() => openVoiceCashModal(), 320);
+        }
+        function chooseReceiptEntry() {
+            closeEntryMethodModal();
+            setTimeout(() => openReceiptModal(), 320);
+        }
+        function openReceiptModal() {
+            receiptOcrReady = false;
+            const amount = document.getElementById("receipt-result-amount");
+            const description = document.getElementById("receipt-result-description");
+            const status = document.getElementById("receipt-scan-status");
+            const fileInput = document.getElementById("receipt-photo-input");
+            const preview = document.getElementById("receipt-preview-image");
+            const action = document.getElementById("receipt-use-result");
+            if (amount) amount.value = "";
+            if (description) description.value = "";
+            if (status) status.textContent = "Belum ada foto yang dipindai.";
+            if (action) action.disabled = true;
+            if (fileInput) fileInput.value = "";
+            if (preview) { preview.classList.add("hidden"); preview.removeAttribute("src"); }
+            openModalSafely("modal-receipt","modal-receipt-panel");
+        }
+        function closeReceiptModal() {
+            closeModalSafely("modal-receipt","modal-receipt-panel");
+            if (receiptObjectUrl) { URL.revokeObjectURL(receiptObjectUrl); receiptObjectUrl = null; }
+        }
         async function scanReceiptPhoto(event) {
             const file = event.target.files && event.target.files[0];
             const status = document.getElementById("receipt-scan-status");
+            const preview = document.getElementById("receipt-preview-image");
+            const action = document.getElementById("receipt-use-result");
             if (!file) return;
-            status.textContent = "Membaca struk...";
+            if (receiptObjectUrl) URL.revokeObjectURL(receiptObjectUrl);
+            receiptObjectUrl = URL.createObjectURL(file);
+            preview.src = receiptObjectUrl;
+            preview.classList.remove("hidden");
+            action.disabled = true;
+            receiptOcrReady = false;
+            status.textContent = "Membaca foto struk...";
             try {
-                if (!window.Tesseract) throw new Error("Library OCR belum siap");
+                if (!window.Tesseract) throw new Error("Mesin OCR belum tersedia");
                 const result = await Tesseract.recognize(file, "ind+eng", {
                     logger: progress => {
-                        if (progress.status === "recognizing text") status.textContent = Math.round((progress.progress || 0) * 100) + "%";
+                        if (progress.status === "recognizing text") status.textContent = "Membaca teks: " + Math.round((progress.progress || 0) * 100) + "%";
                     }
                 });
-                const text = (result.data.text || "").replace(/\\s+/g, " ").trim();
-                if (!text) throw new Error("Teks tidak terbaca");
-                const totalPatterns = [
-                    /(?:GRAND\\s*TOTAL|TOTAL\\s*BAYAR|TOTAL|JUMLAH|AMOUNT\\s*DUE)[^0-9]{0,28}(?:RP|IDR)?\\s*([0-9][0-9.,]*)/i,
-                    /(?:RP|IDR)\\s*([0-9][0-9.,]*)/i
+                const text = (result.data.text || "").replace(/\s+/g, " ").trim();
+                if (!text) throw new Error("Teks struk tidak terbaca");
+                const descriptionEl = document.getElementById("receipt-result-description");
+                const amountEl = document.getElementById("receipt-result-amount");
+                const storeLine = text.split(/[|;]/).map(x => x.trim()).find(x => x.length > 2 && !/^(rp|id|total)/i.test(x));
+                if (storeLine) descriptionEl.value = storeLine.slice(0,80);
+                const patterns = [
+                    /(?:GRAND\s*TOTAL|TOTAL\s*BAYAR|TOTAL\s*TAGIHAN|AMOUNT\s*DUE|TOTAL)[^0-9]{0,32}(?:RP|IDR)?\s*([0-9][0-9.,]*)/i,
+                    /(?:RP|IDR)\s*([0-9][0-9.,]*)/i
                 ];
-                let amount = 0;
-                for (const pattern of totalPatterns) {
-                    const found = text.match(pattern);
-                    if (found) {
-                        const raw = found[1].replace(/\\.(?=\\d{3}(?:\\D|$))/g, "").replace(/,/g, "");
-                        const parsed = Number(raw);
-                        if (parsed > 0) { amount = parsed; break; }
-                    }
+                let detected = 0;
+                for (const pattern of patterns) {
+                    const match = text.match(pattern);
+                    if (!match) continue;
+                    const raw = match[1].replace(/\.(?=\d{3}(?:\D|$))/g,"").replace(/,/g,"");
+                    const value = Number(raw);
+                    if (value > 0) { detected = value; break; }
                 }
-                const description = document.getElementById("modal-input-description");
-                if (description && !description.value) description.value = text.slice(0, 100);
-                if (amount > 0) {
-                    document.getElementById("modal-input-amount").value = amount;
-                    status.textContent = "Nominal terdeteksi";
-                    updateCurrencyPreview();
-                    showToast("Nominal struk terdeteksi. Periksa sebelum menyimpan.", "success");
-                } else {
-                    status.textContent = "Periksa nominal";
-                    showToast("Teks terbaca, tetapi total belum terdeteksi. Isi nominal secara manual.", "warning");
-                }
+                if (detected > 0) amountEl.value = detected;
+                if (!descriptionEl.value) descriptionEl.value = "Pembelian dari struk";
+                receiptOcrReady = true;
+                action.disabled = false;
+                status.textContent = detected > 0
+                    ? "Struk terbaca. Periksa deskripsi dan nominal."
+                    : "Teks terbaca, total belum terdeteksi. Isi nominal secara manual.";
+                if (detected > 0) showToast("Nominal struk terdeteksi. Pastikan nilainya benar.", "success");
+                else showToast("OCR selesai, tetapi nominal perlu kamu isi atau koreksi.", "warning");
             } catch (error) {
-                console.error(error);
-                status.textContent = "OCR gagal";
-                showToast("Struk gagal dibaca. Kamu tetap bisa mengisi transaksi manual.", "warning");
+                console.error("Receipt OCR failed:",error);
+                status.textContent = "Foto gagal dibaca. Coba foto yang lebih jelas.";
+                showToast("OCR gagal membaca struk. Coba ulangi dengan foto lebih jelas.", "warning");
             }
+        }
+        function useReceiptResult() {
+            const amount = Number(document.getElementById("receipt-result-amount").value);
+            const description = document.getElementById("receipt-result-description").value.trim();
+            if (!(amount > 0)) { showToast("Isi nominal struk terlebih dahulu.", "warning"); return; }
+            closeReceiptModal();
+            setTimeout(() => {
+                openModalTransaction();
+                setModalTransactionType("expense");
+                document.getElementById("modal-input-currency").value = state.currency || "IDR";
+                document.getElementById("modal-input-amount").value = amount;
+                document.getElementById("modal-input-description").value = description || "Pembelian dari struk";
+                document.getElementById("modal-input-category").value = "Operasional";
+                updateCurrencyPreview();
+                showToast("Hasil foto struk siap diperiksa sebelum disimpan.", "success");
+            },320);
         }
 
         function parseIndonesianNumberWords(text) {
