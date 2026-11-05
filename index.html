@@ -5,6 +5,7 @@
     <!-- CRITICAL VIEWPORT FIX: Mencegah zoom dan menangani area poni (safe-area) mobile -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Arthanesia — Smart Financial Planner for UMKM</title>
+    <meta name="arthanesia-build" content="review-2026-11-05-03">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -26,6 +27,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -58,7 +60,8 @@
         @keyframes typing { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
     
     /* ARTHANESIA UI SYSTEM — refreshed wallet-purple identity */
-    html.dark{--app-bg:#111426;--app-surface:#191d32;--app-ink:#f0f1fb;--app-muted:#9da4bf;--app-line:#2b304a;--app-brand-soft:#292850;--app-shadow:0 10px 28px rgba(0,0,0,.18)}\n    :root{--app-brand:#5b55ed;--app-brand-dark:#4742cb;--app-brand-soft:#efefff;--app-ink:#1d2440;--app-muted:#8790aa;--app-line:#e9ebf4;--app-surface:#fff;--app-bg:#f6f7fc;--app-shadow:0 9px 28px rgba(37,45,104,.07)}
+    html.dark{--app-bg:#111426;--app-surface:#191d32;--app-ink:#f0f1fb;--app-muted:#9da4bf;--app-line:#2b304a;--app-brand-soft:#292850;--app-shadow:0 10px 28px rgba(0,0,0,.18)}
+    :root{--app-brand:#5b55ed;--app-brand-dark:#4742cb;--app-brand-soft:#efefff;--app-ink:#1d2440;--app-muted:#8790aa;--app-line:#e9ebf4;--app-surface:#fff;--app-bg:#f6f7fc;--app-shadow:0 9px 28px rgba(37,45,104,.07)}
     html,body{width:100%;height:100%;min-height:100%;margin:0}
     body{background:var(--app-bg)!important;color:var(--app-ink)!important;font-family:'Inter',sans-serif!important;overflow:hidden!important}
     .phone-frame{width:100%!important;height:100dvh!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:var(--app-bg)!important}
@@ -170,7 +173,8 @@
       #screen-main-app>header>div:first-child{display:flex!important;margin:0!important}
       #screen-main-app>header>div:first-child>div{width:34px!important;height:34px!important;border-radius:11px!important}
       #screen-main-app>header>div:first-child i{display:none!important}
-      #screen-main-app>header>div:first-child>div:after{content:"";position:absolute}\n      #screen-main-app>header .arthanesia-logo{width:37px!important;height:34px!important}
+      #screen-main-app>header>div:first-child>div:after{content:"";position:absolute}
+      #screen-main-app>header .arthanesia-logo{width:37px!important;height:34px!important}
       #screen-main-app>header>div:first-child>span{font-size:14px!important}
       #app-view-container{left:0!important;right:0!important;top:62px!important;bottom:72px!important;padding:17px 14px 25px!important}
       #screen-main-app>nav{left:0!important;right:0!important;top:auto!important;bottom:0!important;width:100%!important;height:72px!important;min-height:72px!important;flex-direction:row!important;align-items:center!important;justify-content:space-around!important;gap:0!important;padding:5px 5px calc(5px + env(safe-area-inset-bottom))!important;border-top:1px solid var(--app-line)!important;border-right:0!important}
@@ -502,6 +506,14 @@
                             <div class="w-full h-36 relative"><canvas id="chartTrendCashflow" class="pointer-events-none"></canvas></div>
                         </div>
                         <div class="p-4 bg-white dark:bg-fintech-darkCard border border-slate-100 dark:border-slate-800 rounded-3xl shadow-sm">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Candle Arus Kas · 12 Bulan</h4>
+                                <span class="text-[8px] font-bold text-slate-400">OHLC</span>
+                            </div>
+                            <div class="w-full h-44 relative"><canvas id="chartCashflowCandles" class="pointer-events-none"></canvas></div>
+                            <p class="mt-2 text-[9px] text-slate-400">Candle bulanan menunjukkan saldo pembuka, tertinggi, terendah, dan penutup.</p>
+                        </div>
+                        <div class="p-4 bg-white dark:bg-fintech-darkCard border border-slate-100 dark:border-slate-800 rounded-3xl shadow-sm">
                             <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Distribusi Beban Usaha</h4>
                             <div class="w-full h-40 relative flex justify-center items-center"><canvas id="chartExpenseBreakdown" class="pointer-events-none"></canvas></div>
                         </div>
@@ -726,11 +738,21 @@
                                 <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Nominal & Mata Uang</label>
                                 <div class="flex space-x-2">
                                     <select id="modal-input-currency" onchange="updateCurrencyPreview()" class="w-24 px-3 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:border-indigo-500 transition appearance-none">
-                                        <option value="IDR">IDR</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="JPY">JPY</option>
+                                        <option value="IDR">IDR — Rupiah</option><option value="USD">USD — Dollar AS</option><option value="EUR">EUR — Euro</option><option value="GBP">GBP — Pound</option><option value="JPY">JPY — Yen</option><option value="SGD">SGD — Dollar Singapura</option><option value="AUD">AUD — Dollar Australia</option><option value="MYR">MYR — Ringgit</option>
                                     </select>
                                     <div class="relative flex-1"><input id="modal-input-amount" oninput="updateCurrencyPreview()" required type="number" placeholder="0" step="any" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500 transition"></div>
                                 </div>
                                 <p id="modal-currency-preview" class="text-[9px] font-bold text-indigo-500 ml-1 h-3"></p>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Foto Struk</label>
+                                <div class="flex items-center gap-2">
+                                    <label class="flex-1 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl text-[10px] font-bold text-indigo-600 dark:text-indigo-300 cursor-pointer text-center">
+                                        <i class="fa-solid fa-camera mr-1"></i> Ambil / pilih foto struk
+                                        <input id="receipt-photo-input" type="file" accept="image/*" capture="environment" class="hidden" onchange="scanReceiptPhoto(event)">
+                                    </label>
+                                    <span id="receipt-scan-status" class="text-[9px] text-slate-400 min-w-[76px]">Belum dipindai</span>
+                                </div>
                             </div>
                             <div class="space-y-1.5">
                                 <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Keterangan Singkat</label>
@@ -894,8 +916,66 @@
         let activeCharts = {};
         let authTabMode = "login";
 
-        // EXCHANGE RATES (Fallback Static)
-        const EXCHANGE_RATES = { IDR: 1, USD: 16000, EUR: 17500, GBP: 20500, JPY: 105 };
+        // Live reference FX rates (USD base) + gold spot. Fallback is used only when provider is unavailable.
+        const EXCHANGE_RATES = { USD: 1, IDR: 16000, EUR: 0.92, GBP: 0.78, JPY: 150, SGD: 1.34, AUD: 1.52, MYR: 4.45 };
+        const FX_ENDPOINT = "https://open.er-api.com/v6/latest/USD";
+        const GOLD_ENDPOINT = "https://api.gold-api.com/price/XAU";
+        const LIVE_DATA_CACHE = { rates: null, fxUpdatedAt: null, fxNextUpdateUnix: 0, goldUsdOz: null, goldUpdatedAt: null, goldFetchedAt: 0 };
+
+        function loadMarketCache() {
+            try {
+                const saved = JSON.parse(localStorage.getItem("arthanesia_market_cache") || "null");
+                if (saved) Object.assign(LIVE_DATA_CACHE, saved);
+            } catch (_) {}
+        }
+
+        async function refreshLiveMarketData(force = false) {
+            loadMarketCache();
+            const now = Date.now();
+            const fxExpired = force || !LIVE_DATA_CACHE.rates ||
+                (LIVE_DATA_CACHE.fxNextUpdateUnix && now >= LIVE_DATA_CACHE.fxNextUpdateUnix * 1000);
+            const goldExpired = force || !LIVE_DATA_CACHE.goldUsdOz || (now - (LIVE_DATA_CACHE.goldFetchedAt || 0) > 30000);
+            const requests = [];
+            if (fxExpired) requests.push((async () => {
+                const response = await fetch(FX_ENDPOINT, { cache: "no-store" });
+                if (!response.ok) throw new Error("Kurs mata uang gagal dimuat");
+                const data = await response.json();
+                if (data.result !== "success" || !data.rates) throw new Error("Format kurs tidak valid");
+                LIVE_DATA_CACHE.rates = data.rates;
+                LIVE_DATA_CACHE.fxUpdatedAt = data.time_last_update_utc || null;
+                LIVE_DATA_CACHE.fxNextUpdateUnix = Number(data.time_next_update_unix || 0);
+            })());
+            if (goldExpired) requests.push((async () => {
+                const response = await fetch(GOLD_ENDPOINT, { cache: "no-store" });
+                if (!response.ok) throw new Error("Harga emas gagal dimuat");
+                const data = await response.json();
+                const value = Number(data.price);
+                if (!(value > 0)) throw new Error("Harga spot emas tidak valid");
+                LIVE_DATA_CACHE.goldUsdOz = value;
+                LIVE_DATA_CACHE.goldUpdatedAt = data.updatedAt || new Date().toISOString();
+                LIVE_DATA_CACHE.goldFetchedAt = Date.now();
+            })());
+            const results = await Promise.allSettled(requests);
+            try { localStorage.setItem("arthanesia_market_cache", JSON.stringify(LIVE_DATA_CACHE)); } catch (_) {}
+            return {
+                fxOk: !!LIVE_DATA_CACHE.rates,
+                goldOk: !!LIVE_DATA_CACHE.goldUsdOz,
+                errors: results.filter(r => r.status === "rejected").map(r => r.reason?.message || "Provider tidak tersedia")
+            };
+        }
+
+        function getRateFromUSD(currency) {
+            return Number((LIVE_DATA_CACHE.rates || {})[currency] || EXCHANGE_RATES[currency] || 1);
+        }
+        function convertCurrency(amount, from, to) {
+            const value = Number(amount) || 0;
+            if (from === to) return value;
+            return (value / getRateFromUSD(from)) * getRateFromUSD(to);
+        }
+        function getGoldPricePerGram(currency = "IDR") {
+            if (!(LIVE_DATA_CACHE.goldUsdOz > 0)) return null;
+            return LIVE_DATA_CACHE.goldUsdOz / 31.1034768 * getRateFromUSD(currency);
+        }
 
         // ====================================================
         function initUserDatabaseSystem() { if (!localStorage.getItem('arthanesia_accounts')) localStorage.setItem('arthanesia_accounts', JSON.stringify([GUEST_DEMO_ACCOUNT])); }
@@ -917,7 +997,7 @@
         function formatVal(amount, overrideCurrency = null) {
             const safeAmount = Number(amount) || 0;
             const targetCurrency = overrideCurrency || state.currency || "IDR";
-            const locales = { IDR: 'id-ID', USD: 'en-US', EUR: 'de-DE', GBP: 'en-GB', JPY: 'ja-JP' };
+            const locales = { IDR: 'id-ID', USD: 'en-US', EUR: 'de-DE', GBP: 'en-GB', JPY: 'ja-JP', SGD: 'en-SG', AUD: 'en-AU', MYR: 'ms-MY' };
             const fraction = (targetCurrency === 'JPY' || targetCurrency === 'IDR') ? 0 : 2;
             return new Intl.NumberFormat(locales[targetCurrency] || 'id-ID', { style: 'currency', currency: targetCurrency, minimumFractionDigits: fraction }).format(safeAmount);
         }
@@ -1344,8 +1424,7 @@
             const previewEl = document.getElementById('modal-currency-preview');
             if (!amount || transCurr === profileCurr) { previewEl.innerText = ''; return; }
             
-            const amountInIDR = amount * EXCHANGE_RATES[transCurr];
-            const finalAmount = amountInIDR / EXCHANGE_RATES[profileCurr];
+            const finalAmount = convertCurrency(amount, transCurr, profileCurr);
             previewEl.innerText = `≈ ${formatVal(finalAmount, profileCurr)}`;
         }
 
@@ -1358,11 +1437,10 @@
             const profileCurr = state.currency || 'IDR';
 
             if (transCurr !== profileCurr) {
-                const amountInIDR = amount * EXCHANGE_RATES[transCurr];
-                amount = amountInIDR / EXCHANGE_RATES[profileCurr];
+                amount = convertCurrency(amount, transCurr, profileCurr);
             }
 
-            state.transactions.push({ id: Date.now(), type: transTypeSelected, amount: amount, currency: profileCurr, category: cat, description: desc, date: new Date().toISOString().split('T')[0] });
+            state.transactions.push({ id: Date.now(), type: transTypeSelected, amount: amount, currency: profileCurr, originalAmount: Number(document.getElementById('modal-input-amount').value), originalCurrency: transCurr, category: cat, description: desc, date: new Date().toISOString().split('T')[0] });
             saveUserChangesToDatabase(); closeModalTransaction();
             document.getElementById('modal-input-amount').value = ''; document.getElementById('modal-input-description').value = '';
             document.getElementById('modal-currency-preview').innerText = '';
@@ -1375,72 +1453,193 @@
         // VOICECASH
         function openVoiceCashModal() { openModalSafely('modal-voicecash', 'modal-voicecash-panel'); }
         function closeVoiceCashModal() { closeModalSafely('modal-voicecash', 'modal-voicecash-panel'); }
+        async function scanReceiptPhoto(event) {
+            const file = event.target.files && event.target.files[0];
+            const status = document.getElementById("receipt-scan-status");
+            if (!file) return;
+            status.textContent = "Membaca struk...";
+            try {
+                if (!window.Tesseract) throw new Error("Library OCR belum siap");
+                const result = await Tesseract.recognize(file, "ind+eng", {
+                    logger: progress => {
+                        if (progress.status === "recognizing text") status.textContent = Math.round((progress.progress || 0) * 100) + "%";
+                    }
+                });
+                const text = (result.data.text || "").replace(/\\s+/g, " ").trim();
+                if (!text) throw new Error("Teks tidak terbaca");
+                const totalPatterns = [
+                    /(?:GRAND\\s*TOTAL|TOTAL\\s*BAYAR|TOTAL|JUMLAH|AMOUNT\\s*DUE)[^0-9]{0,28}(?:RP|IDR)?\\s*([0-9][0-9.,]*)/i,
+                    /(?:RP|IDR)\\s*([0-9][0-9.,]*)/i
+                ];
+                let amount = 0;
+                for (const pattern of totalPatterns) {
+                    const found = text.match(pattern);
+                    if (found) {
+                        const raw = found[1].replace(/\\.(?=\\d{3}(?:\\D|$))/g, "").replace(/,/g, "");
+                        const parsed = Number(raw);
+                        if (parsed > 0) { amount = parsed; break; }
+                    }
+                }
+                const description = document.getElementById("modal-input-description");
+                if (description && !description.value) description.value = text.slice(0, 100);
+                if (amount > 0) {
+                    document.getElementById("modal-input-amount").value = amount;
+                    status.textContent = "Nominal terdeteksi";
+                    updateCurrencyPreview();
+                    showToast("Nominal struk terdeteksi. Periksa sebelum menyimpan.", "success");
+                } else {
+                    status.textContent = "Periksa nominal";
+                    showToast("Teks terbaca, tetapi total belum terdeteksi. Isi nominal secara manual.", "warning");
+                }
+            } catch (error) {
+                console.error(error);
+                status.textContent = "OCR gagal";
+                showToast("Struk gagal dibaca. Kamu tetap bisa mengisi transaksi manual.", "warning");
+            }
+        }
+
+        function parseIndonesianNumberWords(text) {
+            const words = text.toLowerCase().replace(/[^a-z\\s]/g, " ").trim().split(/\\s+/).filter(Boolean);
+            const small = { nol:0, satu:1, se:1, dua:2, tiga:3, empat:4, lima:5, enam:6, tujuh:7, delapan:8, sembilan:9, sepuluh:10, sebelas:11 };
+            let total = 0, group = 0;
+            for (let i = 0; i < words.length; i++) {
+                const w = words[i];
+                if (small[w] !== undefined) {
+                    const n = small[w];
+                    if (words[i+1] === "belas") { group += 10 + n; i++; }
+                    else if (words[i+1] === "puluh") { group += n * 10; i++; }
+                    else if (words[i+1] === "ratus") { group += n * 100; i++; }
+                    else group += n;
+                } else if (w === "seratus") group += 100;
+                else if (w === "seribu" || w === "ribu" || w === "rb") { total += (group || 1) * 1000; group = 0; }
+                else if (w === "juta" || w === "jt") { total += (group || 1) * 1000000; group = 0; }
+                else if (w === "miliar" || w === "milyar") { total += (group || 1) * 1000000000; group = 0; }
+            }
+            return total + group;
+        }
+
+        function parseVoiceTransaction(transcript) {
+            const text = transcript.toLowerCase().replace(/,/g, ".").trim();
+            const type = /(pengeluaran|keluar|beli|bayar|belanja|biaya|bon)/.test(text) ? "expense" : "income";
+            let currency = "IDR";
+            if (/\\b(usd|dolar|dollar)\\b/.test(text)) currency = "USD";
+            else if (/\\b(eur|euro)\\b/.test(text)) currency = "EUR";
+            else if (/\\b(gbp|pound)\\b/.test(text)) currency = "GBP";
+            else if (/\\b(jpy|yen)\\b/.test(text)) currency = "JPY";
+            else if (/\\b(sgd|dolar singapura)\\b/.test(text)) currency = "SGD";
+            else if (/\\b(aud|dolar australia)\\b/.test(text)) currency = "AUD";
+            else if (/\\b(myr|ringgit)\\b/.test(text)) currency = "MYR";
+            let amount = 0;
+            const numeric = text.match(/(?:rp\\s*)?([0-9]+(?:[.,][0-9]+)?)\\s*(miliar|milyar|juta|jt|ribu|rb|k|m)?/i);
+            if (numeric) {
+                amount = Number(numeric[1].replace(",", "."));
+                const unit = (numeric[2] || "").toLowerCase();
+                if (["juta","jt","m"].includes(unit)) amount *= 1000000;
+                else if (["ribu","rb","k"].includes(unit)) amount *= 1000;
+                else if (["miliar","milyar"].includes(unit)) amount *= 1000000000;
+            } else amount = parseIndonesianNumberWords(text);
+            let category = "Lainnya";
+            if (/makan|kuliner|restoran|kopi|bahan baku/.test(text)) category = "Operasional";
+            else if (/iklan|ads|promosi|marketing/.test(text)) category = "Marketing";
+            else if (/bensin|transport|ojek|taksi|grab|gojek|parkir/.test(text)) category = "Transportasi";
+            else if (/gaji|pegawai|karyawan/.test(text)) category = "Gaji";
+            else if (/mesin|alat|investasi/.test(text)) category = "Investasi";
+            else if (/penjualan|omzet|pendapatan/.test(text)) category = "Penjualan";
+            const context = transcript.match(/\\b(?:untuk|dari|sebagai)\\s+(.+)$/i);
+            return { type, amount: Math.round(amount), currency, category, description: context ? context[1].trim() : transcript.trim() };
+        }
+
         function toggleSpeechRecognition() {
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRec) { showToast("Peramban Anda tidak mendukung Voice API.", "error"); return; }
-            const rec = new SpeechRec(); rec.lang = 'id-ID'; rec.start();
-            document.getElementById('voice-listening-bars').classList.remove('hidden');
-            document.getElementById('voice-transcript-text').innerText = "Mendengarkan instruksi...";
-            rec.onresult = (e) => {
-                const transcript = e.results[0][0].transcript.toLowerCase();
-                document.getElementById('voice-listening-bars').classList.add('hidden');
-                document.getElementById('voice-transcript-text').innerText = `"${transcript}"`;
-                let type = transcript.includes('pengeluaran') || transcript.includes('beli') ? 'expense' : 'income';
-                let amount = transcript.replace(/[^0-9]/g, '');
-                if (transcript.includes('ribu')) amount += '000'; if (transcript.includes('juta')) amount += '000000';
-                if (amount) {
-                    state.transactions.push({ id: Date.now(), type, amount: Number(amount), category: "Lainnya", description: transcript.substring(0, 30), date: new Date().toISOString().split('T')[0] });
-                    saveUserChangesToDatabase(); showToast("Instruksi Suara dieksekusi!", "success");
-                    evaluateBadges();
-                    setTimeout(() => closeVoiceCashModal(), 1200);
-                    if(currentTab === 'home') renderHomeStatements();
-                } else showToast("Nominal tidak terdeteksi.", "warning");
+            if (!SpeechRec) { showToast("Browser ini tidak mendukung pengenalan suara. Gunakan Chrome Android atau input manual.", "error"); return; }
+            const recognition = new SpeechRec();
+            recognition.lang = "id-ID";
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 3;
+            document.getElementById("voice-listening-bars").classList.remove("hidden");
+            document.getElementById("voice-transcript-text").innerText = "Mendengarkan instruksi transaksi...";
+            recognition.onresult = event => {
+                const transcript = event.results[0][0].transcript;
+                const parsed = parseVoiceTransaction(transcript);
+                document.getElementById("voice-listening-bars").classList.add("hidden");
+                document.getElementById("voice-transcript-text").innerText = `"${transcript}"`;
+                if (!(parsed.amount > 0)) {
+                    showToast("Nominal tidak terdeteksi. Contoh: pengeluaran tujuh puluh lima ribu untuk bensin.", "warning");
+                    return;
+                }
+                closeVoiceCashModal();
+                openModalTransaction();
+                setModalTransactionType(parsed.type);
+                document.getElementById("modal-input-currency").value = parsed.currency;
+                document.getElementById("modal-input-amount").value = parsed.amount;
+                document.getElementById("modal-input-description").value = parsed.description.slice(0,80);
+                const cat = document.getElementById("modal-input-category");
+                if ([...cat.options].some(option => option.value === parsed.category)) cat.value = parsed.category;
+                updateCurrencyPreview();
+                showToast("VoiceCash mengisi jenis, nominal, dan keterangan. Periksa lalu simpan transaksi.", "success");
             };
-            rec.onerror = () => { document.getElementById('voice-listening-bars').classList.add('hidden'); showToast("Gagal mendeteksi suara.", "error"); }
+            recognition.onerror = () => {
+                document.getElementById("voice-listening-bars").classList.add("hidden");
+                showToast("Pengenalan suara gagal. Periksa izin mikrofon.", "error");
+            };
+            recognition.start();
         }
 
         // ZAKAT SYARIAH
         function openZakatModal() { openModalSafely('modal-zakat', 'modal-zakat-panel'); fetchAndRenderZakatData(); }
         function closeZakatModal() { closeModalSafely('modal-zakat', 'modal-zakat-panel'); }
         async function fetchAndRenderZakatData() {
-            const ctn = document.getElementById('zakat-content-container');
-            ctn.innerHTML = `<div class="animate-pulse space-y-3"><div class="h-24 bg-slate-200 dark:bg-slate-800 rounded-2xl"></div><div class="h-32 bg-slate-200 dark:bg-slate-800 rounded-2xl"></div></div>`;
-            await new Promise(r => setTimeout(r, 800)); // Simulasi fetch API
-            
-            let goldPrice = 1350000; const nisab = goldPrice * 250; const currYear = new Date().getFullYear();
-            let yearlyInc = 0; (state.transactions || []).forEach(t => { if (t.type === 'income' && t.date.startsWith(currYear.toString())) yearlyInc += Number(t.amount); });
-            const isWajib = yearlyInc >= nisab; const isPaid = state.zakatPaidYear === currYear;
-            const zakatAmt = isWajib ? yearlyInc * 0.025 : 0; const pct = Math.min((yearlyInc/nisab)*100, 100).toFixed(1);
-            let statusHTML = isWajib ? `<span class="bg-rose-100 text-rose-700 px-2 py-1 rounded text-[9px] font-bold">Wajib Zakat</span>` : `<span class="bg-slate-100 text-slate-500 px-2 py-1 rounded text-[9px] font-bold">Belum Wajib</span>`;
-            if (isPaid && isWajib) statusHTML = `<span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-[9px] font-bold">Telah Ditunaikan</span>`;
-
-            ctn.innerHTML = `
+            const container = document.getElementById("zakat-content-container");
+            container.innerHTML = `<div class="animate-pulse p-5 bg-slate-100 dark:bg-slate-800 rounded-2xl text-xs text-slate-500">Memuat harga emas dan menghitung nisab...</div>`;
+            const market = await refreshLiveMarketData();
+            const year = new Date().getFullYear();
+            const currency = state.currency || "IDR";
+            const goldPrice = getGoldPricePerGram(currency);
+            const nisabGrams = 250;
+            const nisab = goldPrice ? goldPrice * nisabGrams : 0;
+            const incomeYear = (state.transactions || []).reduce((sum,t) => {
+                if (t.type !== "income") return sum;
+                const date = new Date((t.date || "") + "T00:00:00");
+                return date.getFullYear() === year ? sum + Number(t.amount || 0) : sum;
+            }, 0);
+            const canAssess = nisab > 0;
+            const reached = canAssess && incomeYear >= nisab;
+            const paid = state.zakatPaidYear === year;
+            const percent = canAssess ? Math.min(100, incomeYear / nisab * 100) : 0;
+            const due = reached ? incomeYear * 0.025 : 0;
+            const status = paid && reached
+                ? '<span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-[9px] font-bold">Telah ditunaikan</span>'
+                : reached
+                    ? '<span class="bg-rose-100 text-rose-700 px-2 py-1 rounded text-[9px] font-bold">Mencapai nisab</span>'
+                    : '<span class="bg-amber-100 text-amber-700 px-2 py-1 rounded text-[9px] font-bold">Belum mencapai nisab</span>';
+            const marketStamp = goldPrice ? new Date(LIVE_DATA_CACHE.goldUpdatedAt).toLocaleString("id-ID") : "Data emas belum tersedia";
+            container.innerHTML = `
                 <div class="bg-white dark:bg-fintech-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3 mb-3">
                     <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-                        <span class="text-[10px] font-black text-slate-500 uppercase">Status Tahun ${currYear}</span> ${statusHTML}
+                        <span class="text-[10px] font-black text-slate-500 uppercase">Zakat Penghasilan · ${year}</span>${status}
                     </div>
                     <div class="grid grid-cols-2 gap-3">
-                        <div><span class="text-[9px] text-slate-400 block font-medium">Harga Emas Live</span><span class="text-[11px] font-bold text-amber-500">${goldPrice ? formatVal(goldPrice) : "Belum tersedia"}/gr</span></div>
-                        <div><span class="text-[9px] text-slate-400 block font-medium">Nisab Penghasilan (250gr)</span><span class="text-[11px] font-bold text-slate-800 dark:text-white">${nisab ? formatVal(nisab) : "Menunggu harga emas"}</span></div>
+                        <div><span class="text-[9px] text-slate-400 block">Harga emas spot</span><b class="text-[11px] text-amber-500">${goldPrice ? formatVal(goldPrice,currency) : "Belum tersedia"}/gr</b></div>
+                        <div><span class="text-[9px] text-slate-400 block">Nisab konfigurasi (250gr)</span><b class="text-[11px]">${canAssess ? formatVal(nisab,currency) : "Menunggu harga emas"}</b></div>
                     </div>
+                    <p class="text-[8px] text-slate-400">Pembaruan harga emas: ${marketStamp}. Data kurs: ${LIVE_DATA_CACHE.fxUpdatedAt || "belum tersedia"}.</p>
+                    <button onclick="refreshLiveMarketData(true).then(fetchAndRenderZakatData)" class="text-[9px] font-bold text-indigo-600"><i class="fa-solid fa-rotate mr-1"></i> Perbarui harga</button>
                 </div>
                 <div class="bg-white dark:bg-fintech-darkCard p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm text-center">
-                    <span class="text-[10px] font-black text-slate-400 uppercase block mb-1">Total Pemasukan ${currYear}</span>
-                    <h2 class="text-xl font-black text-slate-800 dark:text-white">${formatVal(yearlyInc)}</h2>
+                    <span class="text-[10px] font-black text-slate-400 uppercase block mb-1">Total penghasilan tercatat tahun ini</span>
+                    <h2 class="text-xl font-black text-slate-800 dark:text-white">${formatVal(incomeYear,currency)}</h2>
                     <div class="mt-4 text-left">
-                        <div class="flex justify-between text-[9px] font-bold text-slate-500 mb-1.5"><span>Progres ke Nisab</span><span>${pct}%</span></div>
-                        <div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div class="h-full ${isWajib?'bg-emerald-500':'bg-amber-500'} transition-all" style="width:${pct}%"></div></div>
-                         <div class="mt-2 text-[9px] font-bold ${isWajib?'text-emerald-600':'text-amber-600'}">${isWajib ? "Penghasilan sudah mencapai nisab." : `Kurang ${formatVal(Math.max(nisab-yearlyInc,0))} lagi untuk mencapai nisab.`}</div>
+                        <div class="flex justify-between text-[9px] font-bold text-slate-500 mb-1.5"><span>Progres menuju nisab</span><span>${canAssess ? percent.toFixed(1) : "—"}%</span></div>
+                        <div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div class="h-full ${reached ? "bg-emerald-500" : "bg-amber-500"}" style="width:${percent}%"></div></div>
+                        <p class="mt-2 text-[9px] font-bold ${reached ? "text-emerald-600" : "text-amber-600"}">${!canAssess ? "Harga emas belum tersedia; status belum dapat ditentukan." : reached ? "Penghasilan telah mencapai nisab konfigurasi." : "Masih kurang " + formatVal(nisab-incomeYear,currency) + " untuk mencapai nisab."}</p>
                     </div>
-                    ${isWajib ? `<div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-center"><span class="text-[10px] font-black text-slate-400 uppercase block mb-1">Kewajiban Zakat (2.5%)</span><span class="text-lg font-black text-emerald-600">${formatVal(zakatAmt)}</span></div>` : ''}
+                    ${reached ? `<div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800"><span class="text-[10px] text-slate-400 block">Estimasi 2,5%</span><b class="text-xl text-emerald-600">${formatVal(due,currency)}</b></div>` : ""}
+                    ${reached && !paid ? `<div class="mt-4 space-y-2"><button onclick="window.open('https://bayarzakat.baznas.go.id/bayarzakat','_blank')" class="w-full py-3 bg-emerald-600 text-white rounded-xl text-xs font-bold">Bayar via BAZNAS</button><button onclick="confirmZakatPaid()" class="w-full py-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-[10px] font-bold">Konfirmasi pembayaran</button></div>` : ""}
                 </div>
-                ${isWajib && !isPaid ? `
-                <div class="space-y-3 mt-4">
-                    <button onclick="window.open('https://bayarzakat.baznas.go.id/bayarzakat', '_blank')" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold active:scale-95 transition shadow-lg shadow-emerald-600/30">Bayar via BAZNAS</button>
-                    <button onclick="confirmZakatPaid()" class="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-[11px] font-bold active:scale-95 transition">Konfirmasi Pembayaran</button>
-                </div>` : ''}
+                <p class="text-[8px] text-slate-400 mt-3">Nisab 250 gram adalah konfigurasi khusus Arthanesia sesuai permintaanmu, bukan klaim bahwa angka ini merupakan standar universal semua jenis zakat. Konfirmasi ketentuan kepada amil/ahli syariah yang kamu ikuti.</p>
             `;
         }
+
         function confirmZakatPaid() { state.zakatPaidYear = new Date().getFullYear(); saveUserChangesToDatabase(); evaluateBadges(); fetchAndRenderZakatData(); pushNotification("Berhasil", "Zakat profesi telah tercatat!"); }
 
         // GOALS
@@ -1483,22 +1682,30 @@
         function handleEditProfileSubmit(e) { e.preventDefault(); state.username = document.getElementById('edit-profile-name').value; state.businessName = document.getElementById('edit-profile-business').value; saveUserChangesToDatabase(); closeEditProfileModal(); renderProfileSettingsData(); showToast("Profil diperbarui.", "success"); }
         function toggleBiometricSecure() { state.secureBiometric = document.getElementById('profile-secure-toggle').checked; saveUserChangesToDatabase(); showToast("Keamanan biometrik diatur.", "info"); }
         
-        function changeCurrencyState() { 
+        async function changeCurrencyState() {
             const newCurr = document.getElementById('profile-input-currency').value;
             const oldCurr = state.currency || 'IDR';
-            if (newCurr !== oldCurr) {
-                const rate = EXCHANGE_RATES[oldCurr] / EXCHANGE_RATES[newCurr];
-                (state.transactions || []).forEach(t => t.amount = t.amount * rate);
-                (state.goals || []).forEach(g => { g.target = g.target * rate; g.current = g.current * rate; });
-                
-                state.currency = newCurr; 
-                saveUserChangesToDatabase(); 
-                showToast(`Mata uang diperbarui ke ${newCurr}`, "success");
-                
-                if (currentTab === 'profile') renderProfileSettingsData();
-                if (currentTab === 'home') renderHomeStatements();
-                if (currentTab === 'analytics') renderAnalyticsStats();
-            }
+            if (newCurr === oldCurr) return;
+            const market = await refreshLiveMarketData();
+            (state.transactions || []).forEach(t => {
+                if (t.originalAmount === undefined || !t.originalCurrency) {
+                    t.originalAmount = Number(t.amount) || 0;
+                    t.originalCurrency = oldCurr;
+                }
+                t.amount = convertCurrency(t.originalAmount, t.originalCurrency, newCurr);
+                t.currency = newCurr;
+            });
+            (state.goals || []).forEach(g => {
+                g.target = convertCurrency(g.target, oldCurr, newCurr);
+                g.current = convertCurrency(g.current, oldCurr, newCurr);
+            });
+            state.currency = newCurr;
+            saveUserChangesToDatabase();
+            showToast(market.fxOk ? `Mata uang diperbarui ke ${newCurr} menggunakan kurs referensi terbaru.` : `Mata uang diperbarui ke ${newCurr}; kurs fallback digunakan.`, market.fxOk ? "success" : "warning");
+            if (currentTab === 'profile') renderProfileSettingsData();
+            if (currentTab === 'home') renderHomeStatements();
+            if (currentTab === 'transactions') applyFilterTransactions();
+            if (currentTab === 'analytics') renderAnalyticsStats();
         }
 
         // NOTIFICATIONS
@@ -1513,23 +1720,50 @@
 
         // ANALYTICS & CHARTS
         function drawCashflowCandles() {
-             const canvas = document.getElementById("chartCashflowCandles");
-             if (!canvas) return;
-             const ctx = canvas.getContext("2d");
-             const rect = canvas.getBoundingClientRect();
-             const dpr = window.devicePixelRatio || 1;
-             const W = Math.max(320, rect.width), H = Math.max(170, rect.height);
-             canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
-             const end = new Date(); end.setHours(0,0,0,0); const map = {};
-             for(let i=29;i>=0;i--){ const d=new Date(end); d.setDate(end.getDate()-i); map[d.toISOString().slice(0,10)]={open:0,high:0,low:0,close:0}; }
-             (state.transactions||[]).forEach(t=>{ if(map[t.date]){ const v=(t.type==="income"?1:-1)*Number(t.amount); const c=map[t.date]; c.close+=v; c.high=Math.max(c.high,c.close,v,0); c.low=Math.min(c.low,c.close,v,0); }});
-             const rows=Object.entries(map).map(([date,v])=>({date,...v})); const vals=rows.flatMap(r=>[r.high,r.low]).concat([0]);
-             let min=Math.min(...vals), max=Math.max(...vals); if(min===max){min-=1;max+=1;}
-             const pad={l:8,r:8,t:14,b:22}, plotW=W-pad.l-pad.r, plotH=H-pad.t-pad.b, step=plotW/rows.length, y=v=>pad.t+(max-v)/(max-min)*plotH;
-             ctx.strokeStyle="#e8eaf4"; ctx.lineWidth=1; [0,.5,1].forEach(p=>{const yy=pad.t+p*plotH;ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(W-pad.r,yy);ctx.stroke();});
-             rows.forEach((r,i)=>{ const x=pad.l+step*(i+.5), yo=y(r.open), yc=y(r.close), yh=y(r.high), yl=y(r.low), up=r.close>=r.open; ctx.strokeStyle=up?"#10B981":"#EF4444"; ctx.fillStyle=ctx.strokeStyle; ctx.lineWidth=1.3; ctx.beginPath();ctx.moveTo(x,yh);ctx.lineTo(x,yl);ctx.stroke(); const top=Math.min(yo,yc), h=Math.max(2,Math.abs(yc-yo));ctx.fillRect(x-step*.28,top,step*.56,h); if(i%5===0){ctx.fillStyle="#9aa1b8";ctx.font="8px Inter,sans-serif";ctx.fillText(r.date.slice(5),x-12,H-6);}});
-             ctx.fillStyle="#7d849e";ctx.font="8px Inter,sans-serif";ctx.fillText("Hijau = arus bersih positif",8,9);
-         }
+            const canvas = document.getElementById("chartCashflowCandles");
+            if (!canvas) return;
+            const rect = canvas.getBoundingClientRect();
+            const width = Math.max(320, rect.width), height = Math.max(170, rect.height);
+            const ratio = window.devicePixelRatio || 1;
+            canvas.width = width * ratio; canvas.height = height * ratio;
+            const ctx = canvas.getContext("2d");
+            ctx.setTransform(ratio,0,0,ratio,0,0); ctx.clearRect(0,0,width,height);
+            const now = new Date(), months = [];
+            for (let i=11;i>=0;i--) {
+                const date = new Date(now.getFullYear(), now.getMonth()-i, 1);
+                months.push({ key: date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0"), label: date.toLocaleDateString("id-ID",{month:"short"}), items:[] });
+            }
+            let balance = 0;
+            const transactions = [...(state.transactions || [])].sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+            transactions.forEach(t => {
+                const month = (t.date || "").slice(0,7);
+                if (month < months[0].key) balance += (t.type === "income" ? 1 : -1) * Number(t.amount || 0);
+                else { const bucket = months.find(m => m.key === month); if (bucket) bucket.items.push(t); }
+            });
+            const candles = months.map(m => {
+                const open = balance; let high = open, low = open;
+                m.items.forEach(t => {
+                    balance += (t.type === "income" ? 1 : -1) * Number(t.amount || 0);
+                    high = Math.max(high,balance); low = Math.min(low,balance);
+                });
+                return { label:m.label, open, high, low, close:balance };
+            });
+            const values = candles.flatMap(c=>[c.high,c.low]).concat([0]);
+            let min = Math.min(...values), max = Math.max(...values);
+            if (min === max) { min -= 1; max += 1; }
+            const pad = {l:10,r:8,t:18,b:25}, plotW = width-pad.l-pad.r, plotH = height-pad.t-pad.b;
+            const slot = plotW/candles.length, y = v => pad.t + (max-v)/(max-min)*plotH;
+            ctx.strokeStyle = "#e8eaf2"; ctx.lineWidth = 1;
+            for(let i=0;i<4;i++){const yy=pad.t+i*plotH/3;ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(width-pad.r,yy);ctx.stroke();}
+            candles.forEach((c,i)=>{
+                const x=pad.l+slot*(i+.5), up=c.close>=c.open, color=up?"#159B72":"#DB6475";
+                ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=1.5;
+                ctx.beginPath();ctx.moveTo(x,y(c.high));ctx.lineTo(x,y(c.low));ctx.stroke();
+                const top=Math.min(y(c.open),y(c.close)), body=Math.max(2,Math.abs(y(c.close)-y(c.open)));
+                ctx.fillRect(x-slot*.27,top,slot*.54,body);
+                ctx.fillStyle="#9399ad";ctx.font="9px Inter,sans-serif";ctx.textAlign="center";ctx.fillText(c.label,x,height-7);
+            });
+        }
 
          function renderAnalyticsStats() {
             let totalIncome = 0; let totalExpense = 0; let catExpenses = { "Operasional":0, "Marketing":0, "Transportasi":0, "Investasi":0, "Gaji":0, "Lainnya":0 };
@@ -1554,6 +1788,7 @@
 
             activeCharts['trend'] = new Chart(document.getElementById('chartTrendCashflow').getContext('2d'), { type: 'line', data: { labels: ['M1','M2','M3'], datasets: [ { label: 'Masuk', data: [0, 0, totalIncome], borderColor: '#10B981', tension: 0.4 }, { label: 'Keluar', data: [0, 0, totalExpense], borderColor: '#EF4444', tension: 0.4 } ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } } });
             activeCharts['pie'] = new Chart(document.getElementById('chartExpenseBreakdown').getContext('2d'), { type: 'doughnut', data: { labels: Object.keys(catExpenses), datasets: [{ data: Object.values(catExpenses).reduce((a,b)=>a+b,0)>0 ? Object.values(catExpenses) : [1,1,1,1,1,1], backgroundColor: ['#6366F1', '#EC4899', '#F59E0B', '#10B981', '#14B8A6', '#8B5CF6'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { size: 8 } } } } } });
+            requestAnimationFrame(drawCashflowCandles);
         }
 
         // ====================================================
@@ -1660,6 +1895,7 @@
         window.onload = function() {
             function updateClock() { const now = new Date(); document.getElementById('statusBarTime').innerText = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; }
             updateClock(); setInterval(updateClock, 1000);
+            refreshLiveMarketData();
             
             if (loadActiveSession()) { document.getElementById('screen-auth').classList.add('hidden', 'opacity-0'); document.getElementById('screen-main-app').classList.remove('hidden'); applyThemeClass(state.darkMode || false); switchAppTab('home'); }
             else { document.getElementById('screen-auth').classList.remove('opacity-0', 'pointer-events-none'); }
