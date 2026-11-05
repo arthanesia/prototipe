@@ -27,6 +27,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import com.google.mlkit.vision.common.InputImage
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.text.NumberFormat
@@ -55,7 +58,7 @@ private data class MoneyEntry(
     val category: String,
     val amount: Long,
     val income: Boolean,
-    val date: String = "Hari ini"
+    val date: String = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy", Locale("id", "ID")))
 )
 private data class SavingGoal(val name: String, val current: Long, val target: Long, val due: String)
 private enum class Page(val label: String) {
@@ -99,9 +102,12 @@ private fun ArthanesiaApp() {
         ))
     }
     var showTransaction by remember { mutableStateOf(false) }
+    var showEntryChooser by remember { mutableStateOf(false) }
     var initialIncome by remember { mutableStateOf(true) }
     var showGoal by remember { mutableStateOf(false) }
     var voiceDraft by remember { mutableStateOf("") }
+    var parsedAmount by remember { mutableStateOf("") }
+    val context = LocalContext.current
     val incomeTotal = entries.filter { it.income }.sumOf { it.amount }
     val expenseTotal = entries.filter { !it.income }.sumOf { it.amount }
     val balance = incomeTotal - expenseTotal
@@ -120,9 +126,32 @@ private fun ArthanesiaApp() {
     val speechLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val spoken = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
         if (!spoken.isNullOrBlank()) {
+            initialIncome = !(spoken.contains("pengeluaran", true) || spoken.contains("beli", true) || spoken.contains("bayar", true) || spoken.contains("belanja", true))
             voiceDraft = spoken
+            parsedAmount = parseAmountFromText(spoken)?.toString() ?: ""
             showTransaction = true
-            initialIncome = !(spoken.contains("pengeluaran", true) || spoken.contains("beli", true) || spoken.contains("bayar", true))
+        }
+    }
+    val receiptLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            runCatching { InputImage.fromFilePath(context, uri) }
+                .onSuccess { image ->
+                    TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS).process(image)
+                        .addOnSuccessListener { result ->
+                            val lines = result.text.lines().filter { it.isNotBlank() }
+                            voiceDraft = lines.take(3).joinToString(" ").take(100).ifBlank { "Pembelian dari struk" }
+                            parsedAmount = parseAmountFromText(result.text)?.toString() ?: ""
+                            initialIncome = false
+                            showTransaction = true
+                            if (parsedAmount.isBlank()) Toast.makeText(context, "Teks terbaca. Masukkan nominal secara manual.", Toast.LENGTH_LONG).show()
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(context, "Struk tidak dapat dibaca. Coba foto yang lebih jelas.", Toast.LENGTH_LONG).show()
+                        }
+                }
+                .onFailure {
+                    Toast.makeText(context, "Foto tidak dapat dibuka.", Toast.LENGTH_LONG).show()
+                }
         }
     }
     val micPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -174,11 +203,11 @@ private fun ArthanesiaApp() {
                     Box(Modifier.fillMaxSize().padding(padding)) {
                         when (page) {
                             Page.HOME -> HomeScreen(owner, business, balance, incomeTotal, expenseTotal, entries,
-                                onAdd = { initialIncome = it; showTransaction = true; voiceDraft = "" },
+                                onAdd = { initialIncome = it; showEntryChooser = true; voiceDraft = ""; parsedAmount = "" },
                                 onVoice = { micPermission.launch(Manifest.permission.RECORD_AUDIO) },
                                 onNavigate = { page = it })
                             Page.TRANSACTIONS -> TransactionsScreen(entries,
-                                onAdd = { initialIncome = true; showTransaction = true },
+                                onAdd = { initialIncome = true; showEntryChooser = true; voiceDraft = ""; parsedAmount = "" },
                                 onDelete = { id -> entries = entries.filterNot { it.id == id } })
                             Page.ANALYTICS -> AnalyticsScreen(entries, incomeTotal, expenseTotal)
                             Page.GOALS -> GoalsScreen(goals, onAdd = { showGoal = true })
@@ -194,11 +223,21 @@ private fun ArthanesiaApp() {
             }
         }
     }
+    if (showEntryChooser) {
+        EntryMethodDialog(
+            onDismiss = { showEntryChooser = false },
+            onManual = { showEntryChooser = false; voiceDraft = ""; parsedAmount = ""; showTransaction = true },
+            onReceipt = { showEntryChooser = false; receiptLauncher.launch("image/*") },
+            onVoice = { showEntryChooser = false; micPermission.launch(Manifest.permission.RECORD_AUDIO) }
+        )
+    }
     if (showTransaction) {
-        TransactionDialog(initialIncome, voiceDraft, onDismiss = { showTransaction = false; voiceDraft = "" }) {
+        TransactionDialog(initialIncome, voiceDraft, parsedAmount,
+            onDismiss = { showTransaction = false; voiceDraft = ""; parsedAmount = "" }) {
             entries = listOf(it) + entries
             showTransaction = false
             voiceDraft = ""
+            parsedAmount = ""
         }
     }
     if (showGoal) GoalDialog(onDismiss = { showGoal = false }) { goals = goals + it; showGoal = false }
@@ -645,11 +684,47 @@ private fun ProfileBadge(title: String, subtitle: String, icon: androidx.compose
     }
 }
 
+private fun parseAmountFromText(text: String): Long? {
+    val preferred = text.lines().filter { line ->
+        Regex("(?i)(grand\\s*total|total|jumlah|amount\\s*due|tagihan)").containsMatchIn(line)
+    }
+    val source = if (preferred.isNotEmpty()) preferred.joinToString(" ") else text
+    val matches = Regex("(?i)(?:rp\\.?\\s*)?([0-9][0-9.,]{2,})").findAll(source).toList()
+    for (match in matches.asReversed()) {
+        val normalized = match.groupValues[1].replace(".", "").replace(",", "")
+        val value = normalized.toLongOrNull()
+        if (value != null && value > 0) return value
+    }
+    return null
+}
+
 @Composable
-private fun TransactionDialog(initialIncome: Boolean, initialDescription: String, onDismiss: () -> Unit, onSave: (MoneyEntry) -> Unit) {
+private fun EntryMethodDialog(onDismiss: () -> Unit, onManual: () -> Unit, onReceipt: () -> Unit, onVoice: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Pilih metode pencatatan", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                FilledTonalButton(onClick = onReceipt, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.ReceiptLong, null); Spacer(Modifier.width(9.dp)); Text("Foto Struk / OCR")
+                }
+                FilledTonalButton(onClick = onVoice, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.Mic, null); Spacer(Modifier.width(9.dp)); Text("Suara / VoiceCash")
+                }
+                OutlinedButton(onClick = onManual, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.Edit, null); Spacer(Modifier.width(9.dp)); Text("Manual")
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Tutup") } }
+    )
+}
+
+@Composable
+private fun TransactionDialog(initialIncome: Boolean, initialDescription: String, initialAmount: String, onDismiss: () -> Unit, onSave: (MoneyEntry) -> Unit) {
     var income by remember { mutableStateOf(initialIncome) }
     var title by remember { mutableStateOf(initialDescription) }
-    var amount by remember { mutableStateOf("") }
+    var amount by remember { mutableStateOf(initialAmount) }
     var category by remember { mutableStateOf("Penjualan") }
     var expanded by remember { mutableStateOf(false) }
     AlertDialog(
