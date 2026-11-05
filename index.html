@@ -57,7 +57,7 @@
         @keyframes typing { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
     
     /* ARTHANESIA UI SYSTEM — refreshed wallet-purple identity */
-    :root{--app-brand:#5b55ed;--app-brand-dark:#4742cb;--app-brand-soft:#efefff;--app-ink:#1d2440;--app-muted:#8790aa;--app-line:#e9ebf4;--app-surface:#fff;--app-bg:#f6f7fc;--app-shadow:0 9px 28px rgba(37,45,104,.07)}
+    html.dark{--app-bg:#111426;--app-surface:#191d32;--app-ink:#f0f1fb;--app-muted:#9da4bf;--app-line:#2b304a;--app-brand-soft:#292850;--app-shadow:0 10px 28px rgba(0,0,0,.18)}\n    :root{--app-brand:#5b55ed;--app-brand-dark:#4742cb;--app-brand-soft:#efefff;--app-ink:#1d2440;--app-muted:#8790aa;--app-line:#e9ebf4;--app-surface:#fff;--app-bg:#f6f7fc;--app-shadow:0 9px 28px rgba(37,45,104,.07)}
     html,body{width:100%;height:100%;min-height:100%;margin:0}
     body{background:var(--app-bg)!important;color:var(--app-ink)!important;font-family:'Inter',sans-serif!important;overflow:hidden!important}
     .phone-frame{width:100%!important;height:100dvh!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:var(--app-bg)!important}
@@ -139,11 +139,11 @@
     .auth-copy p{font-size:13px;color:#78819f;max-width:430px;line-height:1.8}
     .auth-feature{margin-top:17px;color:#697391;font-size:11px;font-weight:700}.auth-feature i{color:#5b55ed;margin-right:7px}
     #screen-auth>div:not(.auth-showcase){grid-column:2!important;width:min(100%,440px)!important}
-    #screen-auth>div:first-of-type:not(.auth-showcase){background:#fff!important;border:1px solid #eceef7!important;border-radius:22px!important;padding:29px!important;box-shadow:0 18px 55px rgba(38,46,110,.09)!important;min-height:0!important}
-    #screen-auth>div:first-of-type:not(.auth-showcase) .text-center{padding-top:0!important;margin-bottom:22px!important}
-    #screen-auth>div:first-of-type:not(.auth-showcase) .text-center>div:first-child{display:none!important}
-    #screen-auth>div:first-of-type:not(.auth-showcase) h2{font-size:22px!important;color:#252852!important}
-    #screen-auth>div:first-of-type:not(.auth-showcase) p{font-size:11px!important}
+    #screen-auth>.flex-1:not(.auth-showcase){background:#fff!important;border:1px solid #eceef7!important;border-radius:22px!important;padding:29px!important;box-shadow:0 18px 55px rgba(38,46,110,.09)!important;min-height:0!important}
+    #screen-auth>.flex-1:not(.auth-showcase) .text-center{padding-top:0!important;margin-bottom:22px!important}
+    #screen-auth>.flex-1:not(.auth-showcase) .text-center>div:first-child{display:none!important}
+    #screen-auth>.flex-1:not(.auth-showcase) h2{font-size:22px!important;color:#252852!important}
+    #screen-auth>.flex-1:not(.auth-showcase) p{font-size:11px!important}
     #screen-auth>div:last-child:not(.auth-showcase){border:0!important;padding:13px 4px 0!important;text-align:center!important}
     #screen-auth input{min-height:43px!important;border-radius:11px!important;font-size:12px!important}
     #screen-auth button[type=submit]{min-height:45px!important;border-radius:11px!important;font-size:12px!important;background:linear-gradient(110deg,#6560f4,#4e4bdb)!important}
@@ -169,7 +169,7 @@
       #screen-main-app>header>div:first-child{display:flex!important;margin:0!important}
       #screen-main-app>header>div:first-child>div{width:34px!important;height:34px!important;border-radius:11px!important}
       #screen-main-app>header>div:first-child i{display:none!important}
-      #screen-main-app>header>div:first-child>div:after{content:"";position:absolute}
+      #screen-main-app>header>div:first-child>div:after{content:"";position:absolute}\n      #screen-main-app>header .arthanesia-logo{width:37px!important;height:34px!important}
       #screen-main-app>header>div:first-child>span{font-size:14px!important}
       #app-view-container{left:0!important;right:0!important;top:62px!important;bottom:72px!important;padding:17px 14px 25px!important}
       #screen-main-app>nav{left:0!important;right:0!important;top:auto!important;bottom:0!important;width:100%!important;height:72px!important;min-height:72px!important;flex-direction:row!important;align-items:center!important;justify-content:space-around!important;gap:0!important;padding:5px 5px calc(5px + env(safe-area-inset-bottom))!important;border-top:1px solid var(--app-line)!important;border-right:0!important}
@@ -192,7 +192,7 @@
       #master-trans-list{grid-template-columns:1fr!important}
       #screen-auth{display:flex!important;align-items:stretch!important;justify-content:center!important;gap:0!important;padding:24px 18px!important;overflow-y:auto!important}
       .auth-showcase{display:none!important}
-      #screen-auth>div:first-of-type:not(.auth-showcase){width:100%!important;max-width:440px!important;margin:auto!important;padding:23px!important}
+      #screen-auth>.flex-1:not(.auth-showcase){width:100%!important;max-width:440px!important;margin:auto!important;padding:23px!important}
       #screen-auth>div:last-child:not(.auth-showcase){width:100%!important;max-width:440px!important;margin:0 auto!important}
     }
     @media(min-width:768px) and (max-width:1050px){
