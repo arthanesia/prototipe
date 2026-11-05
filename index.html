@@ -1407,7 +1407,7 @@
             ctn.innerHTML = `<div class="animate-pulse space-y-3"><div class="h-24 bg-slate-200 dark:bg-slate-800 rounded-2xl"></div><div class="h-32 bg-slate-200 dark:bg-slate-800 rounded-2xl"></div></div>`;
             await new Promise(r => setTimeout(r, 800)); // Simulasi fetch API
             
-            let goldPrice = 1350000; const nisab = goldPrice * 85; const currYear = new Date().getFullYear();
+            let goldPrice = 1350000; const nisab = goldPrice * 250; const currYear = new Date().getFullYear();
             let yearlyInc = 0; (state.transactions || []).forEach(t => { if (t.type === 'income' && t.date.startsWith(currYear.toString())) yearlyInc += Number(t.amount); });
             const isWajib = yearlyInc >= nisab; const isPaid = state.zakatPaidYear === currYear;
             const zakatAmt = isWajib ? yearlyInc * 0.025 : 0; const pct = Math.min((yearlyInc/nisab)*100, 100).toFixed(1);
@@ -1421,7 +1421,7 @@
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div><span class="text-[9px] text-slate-400 block font-medium">Harga Emas Live</span><span class="text-[11px] font-bold text-amber-500">${goldPrice ? formatVal(goldPrice) : "Belum tersedia"}/gr</span></div>
-                        <div><span class="text-[9px] text-slate-400 block font-medium">Nisab Penghasilan (85gr)</span><span class="text-[11px] font-bold text-slate-800 dark:text-white">${nisab ? formatVal(nisab) : "Menunggu harga emas"}</span></div>
+                        <div><span class="text-[9px] text-slate-400 block font-medium">Nisab Penghasilan (250gr)</span><span class="text-[11px] font-bold text-slate-800 dark:text-white">${nisab ? formatVal(nisab) : "Menunggu harga emas"}</span></div>
                     </div>
                 </div>
                 <div class="bg-white dark:bg-fintech-darkCard p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm text-center">
