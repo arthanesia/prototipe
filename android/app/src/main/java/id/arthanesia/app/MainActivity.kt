@@ -31,6 +31,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.text.NumberFormat
 import java.util.Locale
+import java.net.HttpURLConnection
+import java.net.URL
+import org.json.JSONObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
 private val Brand = Color(0xFF5B55ED)
 private val BrandDark = Color(0xFF302B9A)
@@ -52,7 +59,7 @@ private data class MoneyEntry(
 private data class SavingGoal(val name: String, val current: Long, val target: Long, val due: String)
 private enum class Page(val label: String) {
     HOME("Beranda"), TRANSACTIONS("Transaksi"), ANALYTICS("Analitik"),
-    GOALS("Target"), ZAKAT("Zakat"), ASSISTANT("Artha AI"), PROFILE("Profil")
+    GOALS("Target"), ZAKAT("Zakat"), TAX("Pajak"), ASSISTANT("Artha AI"), PROFILE("Profil")
 }
 
 class MainActivity : ComponentActivity() {
@@ -175,6 +182,7 @@ private fun ArthanesiaApp() {
                             Page.ANALYTICS -> AnalyticsScreen(entries, incomeTotal, expenseTotal)
                             Page.GOALS -> GoalsScreen(goals, onAdd = { showGoal = true })
                             Page.ZAKAT -> ZakatScreen()
+                            Page.TAX -> TaxScreen(entries)
                             Page.ASSISTANT -> AssistantScreen(balance, incomeTotal, expenseTotal, entries, business)
                             Page.PROFILE -> ProfileScreen(owner, business, currency, dark,
                                 onCurrency = { currency = it }, onTheme = { dark = !dark },
@@ -335,6 +343,7 @@ private fun HomeScreen(owner: String, business: String, balance: Long, income: L
             QuickTile("Transaksi", Icons.Default.ReceiptLong, Modifier.weight(1f)) { onNavigate(Page.TRANSACTIONS) }
             QuickTile("Target", Icons.Default.Flag, Modifier.weight(1f)) { onNavigate(Page.GOALS) }
             QuickTile("Zakat", Icons.Default.AccountBalance, Modifier.weight(1f)) { onNavigate(Page.ZAKAT) }
+            QuickTile("Pajak", Icons.Default.Receipt, Modifier.weight(1f)) { onNavigate(Page.TAX) }
         }
         SectionTitle("Smart Insight", "Ringkasan berbasis transaksi lokal")
         InsightCard(if (income >= expense) "Arus kas positif" else "Perlu evaluasi pengeluaran",
@@ -495,47 +504,49 @@ private fun GoalsScreen(goals: List<SavingGoal>, onAdd: () -> Unit) {
 
 @Composable
 private fun ZakatScreen() {
-    var nisab by remember { mutableStateOf(250) }
-    var goldPrice by remember { mutableStateOf("") }
+    var goldIdrPerGram by remember { mutableStateOf(0.0) }
+    var loading by remember { mutableStateOf(true) }
     var assets by remember { mutableStateOf("") }
     var debts by remember { mutableStateOf("") }
     var haul by remember { mutableStateOf(true) }
-    var result by remember { mutableStateOf<Long?>(null) }
-    val price = goldPrice.toLongOrNull() ?: 0L
-    val nisabValue = price * nisab
-    val netAssets = ((assets.toLongOrNull() ?: 0L) - (debts.toLongOrNull() ?: 0L)).coerceAtLeast(0)
+    LaunchedEffect(Unit) {
+        runCatching {
+            val fx = withContext(Dispatchers.IO) {
+                val f = (URL("https://open.er-api.com/v6/latest/USD").openConnection() as HttpURLConnection).apply { connectTimeout=8000; readTimeout=8000 }
+                JSONObject(f.inputStream.bufferedReader().use { it.readText() })
+            }
+            val usdIdr = fx.getJSONObject("rates").optDouble("IDR", 0.0)
+            val g = withContext(Dispatchers.IO) {
+                val x = (URL("https://api.gold-api.com/price/XAU").openConnection() as HttpURLConnection).apply { connectTimeout=8000; readTimeout=8000 }
+                JSONObject(x.inputStream.bufferedReader().use { it.readText() })
+            }
+            goldIdrPerGram = g.optDouble("price", 0.0) * usdIdr / 31.1034768
+        }.also { loading=false }
+    }
+    val nisab = goldIdrPerGram * 250.0
+    val netAssets = (parseLong(assets) - parseLong(debts)).coerceAtLeast(0L)
+    val wajib = nisab > 0 && netAssets >= nisab && haul
     ScreenColumn {
-        SectionTitle("Kalkulator zakat", "Simulasi zakat usaha berdasarkan parameter")
-        Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = BrandDark)) {
+        SectionTitle("Zakat Penghasilan", "Nisab 250 gram emas · periode tahunan")
+        Card(shape=RoundedCornerShape(18.dp),colors=CardDefaults.cardColors(containerColor=BrandDark)) {
             Column(Modifier.padding(18.dp)) {
-                Text("HARGA EMAS ACUAN", color = Color.White.copy(.7f), fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                Text(if (price > 0) "${rupiah(price)} / gram" else "Rp — / gram", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
-                Text("Harga live belum terhubung. Masukkan harga acuan manual untuk simulasi.", color = Color.White.copy(.74f), fontSize = 10.sp)
+                Text("HARGA EMAS REFERENSI",color=Color.White.copy(.7f),fontSize=9.sp,fontWeight=FontWeight.Bold)
+                Text(if(loading)"Memuat harga…" else "${goldIdrPerGram.let { rupiah(it.toLong()) }} / gram",color=Color.White,fontSize=22.sp,fontWeight=FontWeight.ExtraBold)
+                Text(if(loading)"Mengambil feed harga saat aplikasi dibuka." else "Nisab 250 g = ${rupiah(nisab.toLong())}",color=Color.White.copy(.75f),fontSize=10.sp)
             }
         }
-        Card(shape = RoundedCornerShape(17.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Metode nisab", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = nisab == 250, onClick = { nisab = 250; result = null }, label = { Text("250 gram") })
-                    FilterChip(selected = nisab == 85, onClick = { nisab = 85; result = null }, label = { Text("85 gram") })
-                }
-                OutlinedTextField(goldPrice, { goldPrice = it; result = null }, modifier = Modifier.fillMaxWidth(), label = { Text("Harga emas per gram (IDR)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
-                Text("Nilai nisab: ${if (price > 0) rupiah(nisabValue) else "menunggu harga emas"}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Brand)
-                Divider()
-                Text("Simulasi zakat perdagangan", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                OutlinedTextField(assets, { assets = it; result = null }, modifier = Modifier.fillMaxWidth(), label = { Text("Total aset lancar (IDR)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
-                OutlinedTextField(debts, { debts = it; result = null }, modifier = Modifier.fillMaxWidth(), label = { Text("Utang jangka pendek (IDR)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
-                Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(haul, { haul = it; result = null }); Text("Telah mencapai haul 1 tahun", fontSize = 11.sp) }
-                Button(onClick = { result = if (price > 0 && haul && netAssets >= nisabValue) (netAssets * 0.025).toLong() else 0L }, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Default.Calculate, null); Spacer(Modifier.width(8.dp)); Text("Hitung simulasi zakat")
-                }
-                result?.let { Text(if (it > 0) "Estimasi zakat: ${rupiah(it)}" else "Belum mencapai parameter nisab/haul atau data belum lengkap.", color = if (it > 0) Green else Muted, fontWeight = FontWeight.Bold, fontSize = 13.sp) }
+        Card(shape=RoundedCornerShape(17.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) {
+            Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(9.dp)) {
+                OutlinedTextField(assets,{assets=it},label={Text("Aset yang menjadi dasar")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
+                OutlinedTextField(debts,{debts=it},label={Text("Kewajiban/utang jangka pendek")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
+                Row(verticalAlignment=Alignment.CenterVertically){Checkbox(haul,{haul=it});Text("Sudah mencapai haul 1 tahun",fontSize=11.sp)}
+                Text(if(wajib)"Status: WAJIB • estimasi 2,5% = ${rupiah((netAssets*.025).toLong())}" else "Status: belum memenuhi parameter nisab/haul",color=if(wajib)Green else Muted,fontWeight=FontWeight.Bold)
             }
         }
-        Text("Nisab bergantung pada jenis zakat dan metode yang dipilih. Periksa ketentuan lembaga zakat yang menjadi acuan sebelum membayar.", fontSize = 10.sp, color = Muted)
+        Text("Harga emas menggunakan spot XAU sebagai referensi, bukan harga retail Antam. Feed FX pada implementasi ini adalah provider terbaru yang tersedia; bukan tick-by-tick.",fontSize=9.sp,color=Muted)
     }
 }
+private fun parseLong(s:String)=s.replace(Regex("[^0-9]"),"").toLongOrNull()?:0L
 
 @Composable
 private fun AssistantScreen(balance: Long, income: Long, expense: Long, entries: List<MoneyEntry>, business: String) {
@@ -692,4 +703,37 @@ private fun GoalDialog(onDismiss: () -> Unit, onSave: (SavingGoal) -> Unit) {
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Batal") } }
     )
+}
+
+@Composable
+private fun TaxScreen(entries: List<MoneyEntry>) {
+    val year = java.time.LocalDate.now().year
+    val annualGross = entries.filter { it.income && it.date.contains(year.toString()) }.sumOf { it.amount }
+    var deductions by remember { mutableStateOf("") }
+    val net = (annualGross - parseLong(deductions)).coerceAtLeast(0L)
+    val ptkp = 54_000_000L
+    val pkp = (net - ptkp).coerceAtLeast(0L)
+    val tax = annualPph(pkp)
+    ScreenColumn {
+        SectionTitle("Pajak Penghasilan", "Tahun ${year} · otomatis berganti pada 1 Januari")
+        Card(shape=RoundedCornerShape(18.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) {
+            Column(Modifier.padding(17.dp),verticalArrangement=Arrangement.spacedBy(9.dp)) {
+                Text("Bruto tahunan tercatat",fontWeight=FontWeight.Bold)
+                Text(rupiah(annualGross),fontSize=20.sp,fontWeight=FontWeight.ExtraBold)
+                OutlinedTextField(deductions,{deductions=it},label={Text("Pengurang yang memenuhi syarat")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
+                Text("Penghasilan bersih = bruto − pengurang",fontSize=9.sp,color=Muted)
+                Text(rupiah(net),fontSize=18.sp,fontWeight=FontWeight.ExtraBold)
+                Text("PTKP default ${rupiah(ptkp)} · PKP ${rupiah(pkp)}",fontSize=9.sp,color=Muted)
+                Text("Estimasi PPh tahunan ${rupiah(tax)}",fontSize=20.sp,fontWeight=FontWeight.ExtraBold,color=Brand)
+            }
+        }
+        Text("Arthanesia memakai penghasilan bersih tahunan sebagai dasar estimasi PKP setelah PTKP. Untuk PPh 21 karyawan, pemotongan bulanan memiliki mekanisme TER dan rekonsiliasi tahunan.",fontSize=10.sp,color=Muted)
+        Text("Transaksi tahun sebelumnya tidak dihapus; ketika tahun berganti, perhitungan periode aktif otomatis dimulai dari transaksi tahun baru.",fontSize=10.sp,color=Muted)
+    }
+}
+private fun annualPph(pkp:Long):Long {
+    var r=pkp; var out=0.0
+    val bands=listOf(60_000_000L to .05,190_000_000L to .15,250_000_000L to .25,4_500_000_000L to .30,Long.MAX_VALUE to .35)
+    for((cap,rate) in bands){if(r<=0)break;val part=min(r,cap);out+=part*rate;r-=part}
+    return out.toLong()
 }
