@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "id.arthanesia.app"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "id.arthanesia.app"
