@@ -8,6 +8,7 @@ This directory contains a **deployment blueprint**, not a connected production b
 - `schema-blueprint.sql` describes user-owned profiles and transactions, time-limited support access, and audit logs.
 - `functions/artha-assistant/index.ts` is an authenticated Gemini Edge Function template; explicit `consent: true` is required and only financial aggregates are sent to Gemini.
 - `functions/admin-dashboard/index.ts` is an admin-only metrics/profile directory template. It checks server-managed `app_metadata.role=admin`, writes an audit event, and does not return transaction rows.
+- `functions/admin-support-transactions/index.ts` is an audited support endpoint: it checks a live, owner-approved request for that exact admin, writes the audit event first, then returns limited transaction rows.
 - `config.toml` keeps JWT verification enabled for the assistant function.
 
 ## Production setup checklist
@@ -18,8 +19,9 @@ This directory contains a **deployment blueprint**, not a connected production b
 4. Configure Edge Function secrets: `GEMINI_API_KEY` and, when needed, `GEMINI_MODEL`. Supabase supplies the project URL and anon key to Edge Functions.
 5. Deploy `artha-assistant` with JWT verification enabled. The request must include explicit `consent: true`. The function queries only the caller's RLS-protected rows, sends aggregated category/amount data to Gemini, and never forwards transaction descriptions or receipt images.
 6. Deploy `admin-dashboard` with JWT verification enabled and `SUPABASE_SERVICE_ROLE_KEY` stored as an Edge Function secret only. It checks `app_metadata.role=admin`, writes an audit event, and returns limited profile fields plus aggregate counts only.
-7. For support access, the admin starts a request, the owner approves or declines in-app, the approval lasts 30 minutes, the owner can revoke it, and the backend writes an audit event before returning any individual financial data.
-8. Run RLS tests with at least two ordinary users and one admin. Verify user A cannot select, update, delete, export, or infer user B's transaction rows.
+7. Deploy `admin-support-transactions` with JWT verification enabled. It requires a live, owner-approved support request created for the current admin. It logs the access before reading limited transaction details; direct admin SELECT on transactions is intentionally not granted in the SQL blueprint.
+8. For support access, the admin starts a request, the owner approves or declines in-app, the approval lasts 30 minutes, and the owner can revoke it.
+9. Run RLS tests with at least two ordinary users and one admin. Verify user A cannot select, update, delete, export, or infer user B's transaction rows.
 
 ## Important key handling
 
