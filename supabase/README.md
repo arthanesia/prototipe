@@ -1,0 +1,42 @@
+# Arthanesia backend
+
+This directory contains a **deployment blueprint**, not a connected production backend yet.
+
+## Current state
+
+- No Supabase project is connected to the linked account, so SQL has not been applied.
+- `schema-blueprint.sql` describes user-owned profiles and transactions, time-limited support access, and audit logs.
+- `functions/artha-assistant/index.ts` is an authenticated Gemini Edge Function template.
+- `config.toml` keeps JWT verification enabled for the assistant function.
+
+## Production setup checklist
+
+1. Connect or create the Supabase project that will own Arthanesia data.
+2. Review `schema-blueprint.sql` in a staging project first. Confirm every table has RLS enabled and review all policies with the Supabase security advisors.
+3. Configure Auth (email verification, password reset, session policies) and provision trusted admin roles only through server-side `app_metadata`. Never trust `user_metadata` for authorization.
+4. Configure Edge Function secrets: `GEMINI_API_KEY` and, when needed, `GEMINI_MODEL`. Supabase supplies the project URL and anon key to Edge Functions.
+5. Deploy `artha-assistant` with JWT verification enabled. The request must include explicit `consent: true`. The function queries only the caller's RLS-protected rows, sends aggregated category/amount data to Gemini, and never forwards transaction descriptions or receipt images.
+6. Implement a separate admin metrics endpoint that returns aggregates by default. Do not grant broad admin SELECT access to the transactions table.
+7. For support access, the admin starts a request, the owner approves or declines in-app, the approval lasts 30 minutes, the owner can revoke it, and the backend writes an audit event before returning any individual financial data.
+8. Run RLS tests with at least two ordinary users and one admin. Verify user A cannot select, update, delete, export, or infer user B's transaction rows.
+
+## Important key handling
+
+- Publishable/anon keys may be used by the app with RLS in place.
+- Secret/service-role keys and `GEMINI_API_KEY` must stay in the server's secret store.
+- Never store production credentials in this repository or inside the APK.
+
+## Assistant API contract
+
+POST to the deployed `/functions/v1/artha-assistant` endpoint with an authenticated user JWT and JSON:
+
+```json
+{
+  "question": "Apa kategori pengeluaran terbesar saya?",
+  "from": "2026-11-01",
+  "to": "2026-11-30",
+  "consent": true
+}
+```
+
+The response includes `answer`, `period`, and `transactionCount`. Without explicit consent or a valid session, the request is rejected.
