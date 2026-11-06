@@ -673,9 +673,9 @@ private fun parseLong(s:String)=s.replace(Regex("[^0-9]"),"").toLongOrNull()?:0L
 @Composable
 private fun AssistantScreen(balance: Long, income: Long, expense: Long, entries: List<MoneyEntry>, business: String) {
     var question by remember { mutableStateOf("") }
-    var conversation by remember { mutableStateOf(listOf("Halo! Saya Artha Assistant. Saya dapat membantu membaca ringkasan keuangan $business dari data demo di perangkat ini.")) }
+    var conversation by remember { mutableStateOf(listOf("Halo! Saya Artha Assistant. Saya dapat menganalisis catatan keuangan $business yang tersedia di perangkat ini.")) }
     ScreenColumn {
-        SectionTitle("Artha Assistant", "Asisten finansial UMKM · mode lokal awal")
+        SectionTitle("Artha Assistant", "Analisis pembukuan lokal · offline")
         Card(shape = RoundedCornerShape(17.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 conversation.forEachIndexed { index, msg ->
@@ -688,27 +688,50 @@ private fun AssistantScreen(balance: Long, income: Long, expense: Long, entries:
             }
         }
         Text("Coba tanyakan", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        listOf("Bagaimana kondisi arus kas saya?", "Kategori pengeluaran terbesar?", "Berapa saldo bersih bisnis?").forEach {
+        listOf("Bagaimana kondisi arus kas saya?", "Apa pengeluaran terbesar?", "Bagaimana cara menghemat biaya?", "Buat ringkasan pembukuan").forEach {
             AssistChip(onClick = { question = it }, label = { Text(it, fontSize = 10.sp) }, leadingIcon = { Icon(Icons.Default.AutoAwesome, null, modifier = Modifier.size(15.dp)) })
         }
         OutlinedTextField(question, { question = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Tulis pertanyaan...") })
         Button(onClick = {
             if (question.isNotBlank()) {
-                val q = question
+                val q = question.trim()
+                val expenseByCategory = entries.filterNot { it.income }
+                    .groupBy { it.category }
+                    .mapValues { (_, rows) -> rows.sumOf { it.amount } }
+                    .toList().sortedByDescending { it.second }
+                val incomeByCategory = entries.filter { it.income }
+                    .groupBy { it.category }
+                    .mapValues { (_, rows) -> rows.sumOf { it.amount } }
+                    .toList().sortedByDescending { it.second }
                 val answer = when {
-                    q.contains("arus kas", true) -> "Arus kas bersih saat ini ${rupiah(balance)}. Total pemasukan ${rupiah(income)} dan pengeluaran ${rupiah(expense)}. Ringkasan ini memakai data lokal."
-                    q.contains("pengeluaran terbesar", true) -> {
-                        val top = entries.filter { !it.income }.groupBy { it.category }.mapValues { it.value.sumOf { e -> e.amount } }.maxByOrNull { it.value }
-                        top?.let { "Kategori pengeluaran terbesar adalah ${it.key}, sebesar ${rupiah(it.value)}. Tinjau pemasok dan biaya terkait." } ?: "Belum ada pengeluaran tercatat."
-                    }
-                    q.contains("saldo", true) -> "Saldo bersih bisnis saat ini ${rupiah(balance)}, dihitung dari pemasukan dikurangi pengeluaran yang tercatat."
-                    else -> "Saya dapat membaca arus kas, kategori pengeluaran, dan saldo dari data demo. Gemini API belum diaktifkan."
+                    q.contains("arus kas", true) || q.contains("cash flow", true) ->
+                        "Dari ${entries.size} transaksi yang tersedia, pemasukan ${rupiah(income)}, pengeluaran ${rupiah(expense)}, dan arus kas bersih ${rupiah(balance)}. ${if (balance >= 0) "Catatan menunjukkan arus kas positif." else "Catatan menunjukkan arus kas negatif; tinjau biaya yang bisa ditunda."}"
+                    q.contains("terbesar", true) || q.contains("kategori", true) ->
+                        expenseByCategory.firstOrNull()?.let { "Kategori pengeluaran tertinggi adalah ${it.first} sebesar ${rupiah(it.second)}. Periksa rincian transaksi dan bandingkan kebutuhan rutin sebelum menentukan pengurangan biaya." }
+                            ?: "Belum ada pengeluaran yang tercatat untuk dianalisis."
+                    q.contains("hemat", true) || q.contains("efisiensi", true) ->
+                        expenseByCategory.take(3).takeIf { it.isNotEmpty() }?.joinToString("; ") { "${it.first}: ${rupiah(it.second)}" }?.let { "Tiga pos pengeluaran tertinggi saat ini: $it. Mulailah dengan meninjau biaya berulang, negosiasi pemasok, dan pembelian yang belum mendesak. Ini adalah area evaluasi, bukan jaminan penghematan." }
+                            ?: "Tambahkan beberapa transaksi pengeluaran agar saya dapat menemukan kategori yang layak dievaluasi."
+                    q.contains("pemasukan", true) || q.contains("pendapatan", true) || q.contains("penjualan", true) ->
+                        incomeByCategory.take(3).takeIf { it.isNotEmpty() }?.joinToString("; ") { "${it.first}: ${rupiah(it.second)}" }?.let { "Pemasukan tercatat ${rupiah(income)}. Kontributor kategori teratas: $it." }
+                            ?: "Belum ada pemasukan yang tercatat."
+                    q.contains("margin", true) || q.contains("laba", true) || q.contains("profit", true) ->
+                        if (income > 0) "Saldo bersih ${rupiah(balance)} dengan margin sederhana ${((balance.toDouble() / income) * 100).toInt()}%. Rasio ini hanya memakai total transaksi yang tersedia dan belum tentu sama dengan laba akuntansi."
+                        else "Margin belum dapat dihitung karena belum ada pemasukan yang tercatat."
+                    q.contains("laporan", true) || q.contains("ringkasan", true) ->
+                        "Ringkasan: ${entries.size} transaksi, pemasukan ${rupiah(income)}, pengeluaran ${rupiah(expense)}, dan saldo bersih ${rupiah(balance)}. Buka Buku Transaksi untuk mencetak PDF atau mengekspor CSV."
+                    q.contains("saldo", true) ->
+                        "Saldo bersih dari catatan yang tersedia adalah ${rupiah(balance)}, dihitung dari pemasukan dikurangi pengeluaran."
+                    q.contains("pajak", true) ->
+                        "Estimasi pajak membutuhkan penghasilan bersih tahunan, status PTKP, pengurang yang memenuhi syarat, dan verifikasi aturan terbaru. Gunakan layar Pajak sebagai perkiraan awal, bukan pengganti pelaporan resmi."
+                    else ->
+                        "Saya bisa menganalisis arus kas, kategori pengeluaran, efisiensi, pemasukan, margin sederhana, laporan, dan dasar perhitungan pajak. Jawaban saat ini dihitung dari catatan di perangkat."
                 }
                 conversation = conversation + q + answer
                 question = ""
             }
         }, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.Send, null); Spacer(Modifier.width(7.dp)); Text("Kirim pertanyaan") }
-        Text("Jawaban saat ini menggunakan aturan lokal. Gemini akan diintegrasikan setelah API key diamankan di server.", color = Muted, fontSize = 9.sp)
+        Text("Mode saat ini: analisis lokal tanpa mengirim transaksi ke pihak ketiga. Integrasi Gemini memerlukan project backend aktif dan persetujuan pengguna sebelum agregat keuangan dikirim.", color = Muted, fontSize = 9.sp)
     }
 }
 
