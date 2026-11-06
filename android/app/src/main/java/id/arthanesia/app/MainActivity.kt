@@ -52,7 +52,7 @@ private val Gold = Color(0xFFC58B34)
 private fun rupiah(value: Long): String =
     NumberFormat.getCurrencyInstance(Locale("id", "ID")).format(value).replace(",00", "")
 
-private data class MoneyEntry(
+internal data class MoneyEntry(
     val id: Long = System.currentTimeMillis(),
     val title: String,
     val category: String,
@@ -108,6 +108,36 @@ private fun ArthanesiaApp() {
     var voiceDraft by remember { mutableStateOf("") }
     var parsedAmount by remember { mutableStateOf("") }
     val context = LocalContext.current
+    var pendingPdf by remember { mutableStateOf<ByteArray?>(null) }
+    var pendingCsv by remember { mutableStateOf<ByteArray?>(null) }
+    val pdfSaveLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
+        val payload = pendingPdf
+        pendingPdf = null
+        if (uri != null && payload != null) {
+            runCatching {
+                context.contentResolver.openOutputStream(uri)?.use { it.write(payload) }
+                    ?: error("Tidak dapat membuka lokasi penyimpanan")
+            }.onSuccess {
+                Toast.makeText(context, "PDF pembukuan berhasil disimpan.", Toast.LENGTH_LONG).show()
+            }.onFailure {
+                Toast.makeText(context, "PDF gagal disimpan.", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+    val csvSaveLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        val payload = pendingCsv
+        pendingCsv = null
+        if (uri != null && payload != null) {
+            runCatching {
+                context.contentResolver.openOutputStream(uri)?.use { it.write(payload) }
+                    ?: error("Tidak dapat membuka lokasi penyimpanan")
+            }.onSuccess {
+                Toast.makeText(context, "CSV pembukuan berhasil disimpan.", Toast.LENGTH_LONG).show()
+            }.onFailure {
+                Toast.makeText(context, "CSV gagal disimpan.", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
     val incomeTotal = entries.filter { it.income }.sumOf { it.amount }
     val expenseTotal = entries.filter { !it.income }.sumOf { it.amount }
     val balance = incomeTotal - expenseTotal
