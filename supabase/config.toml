@@ -3,3 +3,6 @@ verify_jwt = true
 
 [functions.admin-dashboard]
 verify_jwt = true
+
+[functions.admin-support-transactions]
+verify_jwt = true
