@@ -1,11 +1,10 @@
-name: Deploy Arthanesia Web Preview
+name: Deploy Arthanesia Information Website
 
 on:
   push:
     branches: [main]
     paths:
-      - "index.html"
-      - "assets/**"
+      - "website/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -31,10 +30,10 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload static site
+      - name: Upload information website
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: ./website
 
       - name: Deploy to GitHub Pages
         id: deployment
