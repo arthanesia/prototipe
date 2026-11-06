@@ -27,12 +27,14 @@ Deno.serve(async (req: Request) => {
   const authorization = req.headers.get("Authorization");
   if (!authorization?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
 
-  let body: { question?: string; from?: string; to?: string };
+  let body: { question?: string; from?: string; to?: string; consent?: boolean };
   try {
     body = await req.json();
   } catch {
     return json({ error: "Request JSON tidak valid." }, 400);
   }
+
+  if (body.consent !== true) return json({ error: "Aktifkan persetujuan pengiriman ringkasan transaksi ke layanan AI terlebih dahulu." }, 403);
 
   const question = String(body.question ?? "").trim().slice(0, 1000);
   if (!question) return json({ error: "Pertanyaan tidak boleh kosong." }, 400);
@@ -110,7 +112,7 @@ Deno.serve(async (req: Request) => {
   ].join("\n\n");
 
   const response = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+    `https://generativelanguage.googleapis.com/v1beta/models/${Deno.env.get("GEMINI_MODEL") ?? "gemini-3.8-flash"}:generateContent`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
