@@ -14,7 +14,7 @@ The website is published from `website/` using GitHub Pages.
 
 The native Android project is in `android/` and uses Kotlin + Jetpack Compose.
 
-The current debug build is **0.3.0**. It includes:
+The current debug build is **0.4.0**. It includes:
 - Native navigation and financial overview
 - Separate manual, voice recognition, and receipt photo/OCR entry methods
 - Local transaction filtering and deletion
