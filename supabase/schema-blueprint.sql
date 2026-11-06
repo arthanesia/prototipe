@@ -143,6 +143,34 @@ create policy "owner approves or rejects support request" on public.support_acce
     and status in ('approved','declined')
   );
 
+
+create or replace function public.stamp_support_approval()
+returns trigger
+language plpgsql
+set search_path = ''
+as $
+begin
+  if old.status = 'pending' and new.status = 'approved' then
+    new.approved_at := now();
+    new.expires_at := now() + interval '30 minutes';
+  elsif old.status = 'approved' and new.status = 'revoked' then
+    new.expires_at := now();
+  end if;
+  return new;
+end;
+$;
+
+drop trigger if exists support_access_approval_stamp on public.support_access_requests;
+create trigger support_access_approval_stamp
+  before update of status on public.support_access_requests
+  for each row execute function public.stamp_support_approval();
+
+drop policy if exists "owner revokes approved support request" on public.support_access_requests;
+create policy "owner revokes approved support request" on public.support_access_requests
+  for update to authenticated
+  using ((select auth.uid()) = user_id and status = 'approved')
+  with check ((select auth.uid()) = user_id and status = 'revoked');
+
 -- Audit rows are written by a trusted backend function, never by mobile clients.
 revoke all on public.admin_audit_logs from anon, authenticated;
 grant select on public.admin_audit_logs to authenticated;
