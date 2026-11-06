@@ -79,6 +79,9 @@ alter table public.admin_audit_logs enable row level security;
 drop policy if exists "profile owner read" on public.profiles;
 create policy "profile owner read" on public.profiles
   for select to authenticated using ((select auth.uid()) = id);
+drop policy if exists "profile owner insert" on public.profiles;
+create policy "profile owner insert" on public.profiles
+  for insert to authenticated with check ((select auth.uid()) = id);
 drop policy if exists "profile owner update" on public.profiles;
 create policy "profile owner update" on public.profiles
   for update to authenticated using ((select auth.uid()) = id)
@@ -103,21 +106,8 @@ create policy "transaction owner update" on public.transactions
 drop policy if exists "transaction owner delete" on public.transactions;
 create policy "transaction owner delete" on public.transactions
   for delete to authenticated using ((select auth.uid()) = user_id);
-drop policy if exists "admin approved support read" on public.transactions;
-create policy "admin approved support read" on public.transactions
-  for select to authenticated
-  using (
-    (auth.jwt()->'app_metadata'->>'role') = 'admin'
-    and exists (
-      select 1 from public.support_access_requests r
-      where r.user_id = transactions.user_id
-        and r.admin_id = (select auth.uid())
-        and r.status = 'approved'
-        and r.approved_at is not null
-        and r.expires_at > now()
-    )
-  );
-
+-- Direct admin reads on transactions are intentionally not granted.
+-- Approved support inspection must go through the audited Edge Function.
 -- Requests are initiated by an admin and can be read by the target user
 -- and the requesting admin. Owners can only change approval state and note.
 drop policy if exists "support request parties read" on public.support_access_requests;
