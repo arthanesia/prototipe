@@ -236,9 +236,23 @@ private fun ArthanesiaApp() {
                                 onAdd = { initialIncome = it; showEntryChooser = true; voiceDraft = ""; parsedAmount = "" },
                                 onVoice = { micPermission.launch(Manifest.permission.RECORD_AUDIO) },
                                 onNavigate = { page = it })
-                            Page.TRANSACTIONS -> TransactionsScreen(entries,
+                            Page.TRANSACTIONS -> TransactionsScreen(
+                                entries = entries,
                                 onAdd = { initialIncome = true; showEntryChooser = true; voiceDraft = ""; parsedAmount = "" },
-                                onDelete = { id -> entries = entries.filterNot { it.id == id } })
+                                onDelete = { id -> entries = entries.filterNot { it.id == id } },
+                                onPrint = {
+                                    runCatching { BookkeepingReport.print(context, entries, business, owner) }
+                                        .onFailure { Toast.makeText(context, "Tidak dapat membuka fitur cetak.", Toast.LENGTH_LONG).show() }
+                                },
+                                onSavePdf = {
+                                    pendingPdf = BookkeepingReport.createPdf(entries, business, owner)
+                                    pdfSaveLauncher.launch("Arthanesia-Pembukuan.pdf")
+                                },
+                                onSaveCsv = {
+                                    pendingCsv = BookkeepingReport.createCsv(entries)
+                                    csvSaveLauncher.launch("Arthanesia-Transaksi.csv")
+                                }
+                            )
                             Page.ANALYTICS -> AnalyticsScreen(entries, incomeTotal, expenseTotal)
                             Page.GOALS -> GoalsScreen(goals, onAdd = { showGoal = true })
                             Page.ZAKAT -> ZakatScreen()
@@ -472,7 +486,14 @@ private fun TransactionRow(entry: MoneyEntry, onDelete: (() -> Unit)? = null) {
 }
 
 @Composable
-private fun TransactionsScreen(entries: List<MoneyEntry>, onAdd: () -> Unit, onDelete: (Long) -> Unit) {
+private fun TransactionsScreen(
+    entries: List<MoneyEntry>,
+    onAdd: () -> Unit,
+    onDelete: (Long) -> Unit,
+    onPrint: () -> Unit,
+    onSavePdf: () -> Unit,
+    onSaveCsv: () -> Unit
+) {
     var query by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf("Semua") }
     val filtered = entries.filter {
@@ -487,10 +508,41 @@ private fun TransactionsScreen(entries: List<MoneyEntry>, onAdd: () -> Unit, onD
         Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             listOf("Semua", "Pemasukan", "Pengeluaran").forEach { FilterChip(selected = filter == it, onClick = { filter = it }, label = { Text(it, fontSize = 10.sp) }) }
         }
-        Text("${filtered.size} transaksi ditemukan", color = Muted, fontSize = 10.sp)
+        val visibleIncome = filtered.filter { it.income }.sumOf { it.amount }
+        val visibleExpense = filtered.filterNot { it.income }.sumOf { it.amount }
+        Card(shape = RoundedCornerShape(15.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+            Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("${filtered.size} transaksi · sesuai filter", color = Muted, fontSize = 10.sp)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Pemasukan", color = Green, fontSize = 9.sp, fontWeight = FontWeight.SemiBold)
+                        Text(rupiah(visibleIncome), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text("Pengeluaran", color = Red, fontSize = 9.sp, fontWeight = FontWeight.SemiBold)
+                        Text(rupiah(visibleExpense), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text("Saldo bersih", color = Brand, fontSize = 9.sp, fontWeight = FontWeight.SemiBold)
+                        Text(rupiah(visibleIncome - visibleExpense), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            OutlinedButton(onClick = onPrint, modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 5.dp, vertical = 9.dp)) {
+                Icon(Icons.Default.Print, null, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(4.dp)); Text("Cetak", fontSize = 9.sp)
+            }
+            OutlinedButton(onClick = onSavePdf, modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 5.dp, vertical = 9.dp)) {
+                Icon(Icons.Default.PictureAsPdf, null, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(4.dp)); Text("PDF", fontSize = 9.sp)
+            }
+            OutlinedButton(onClick = onSaveCsv, modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 5.dp, vertical = 9.dp)) {
+                Icon(Icons.Default.TableView, null, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(4.dp)); Text("CSV", fontSize = 9.sp)
+            }
+        }
         filtered.forEach { TransactionRow(it) }
-        if (filtered.isEmpty()) Text("Tidak ada transaksi yang cocok.", color = Muted)
-        Text("Ekspor CSV/PDF direncanakan pada iterasi berikutnya.", fontSize = 10.sp, color = Muted)
+        if (filtered.isEmpty()) Text("Belum ada transaksi pada filter ini.", color = Muted)
+        Text("Laporan PDF memuat seluruh transaksi tersimpan. CSV dapat dibuka di Excel atau Google Sheets.", fontSize = 9.sp, color = Muted)
     }
 }
 
